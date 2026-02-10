@@ -22,3 +22,13 @@ output "ingress_ip" {
   description = "Ingress Controller IP"
   value       = "localhost"
 }
+
+output "argocd_server_url" {
+  description = "ArgoCD 서버 URL"
+  value       = "http://argocd.local (또는 NodePort 사용)"
+}
+
+output "argocd_initial_password_command" {
+  description = "ArgoCD 초기 admin 비밀번호 확인 명령어"
+  value       = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+}

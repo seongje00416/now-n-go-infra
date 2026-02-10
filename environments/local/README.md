@@ -70,6 +70,15 @@ $ terraform init
 $ terraform plan
 $ terraform apply
 ```
+##### 2-1. ArgoCD 구동 확인
+```
+# ArgoCD 비밀번호 확인
+$ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+# ArgoCD 접속
+# NodePort 확인 -> http://localhost:확인된 노드 포트
+$ kubectl get svc -n argocd argocd-server
+```
 ###### 유의할 점
 1. local 경로에서 실행해야 로컬용 클러스터를 구축하고 생성을 진행함
 => stage는 추후 EKS 배포용 코드

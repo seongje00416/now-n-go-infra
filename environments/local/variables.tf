@@ -14,3 +14,21 @@ variable "namespaces" {
   type        = list(string)                        # 타입으로 리스트 형태를 지정할 수 있음
   default     = ["dev", "staging", "monitoring"]    # 이 경우 기본 값으로 리스트 형태를 제공
 }
+
+variable "argocd_version" {
+  description = "ArgoCD Helm 차트 버전"
+  type        = string
+  default     = "5.51.6"
+}
+
+variable "github_username" {
+  description = "GitHub 사용자명"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_token" {
+  description = "GitHub Personal Access Token"
+  type        = string
+  sensitive   = true
+}
