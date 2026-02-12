@@ -1,0 +1,7 @@
+# Local Terraform File
+./environments/local/.terraform/
+./environments/local/.terraform.lock.hcl
+./environments/local/local-dev-config
+./environments/local/terraform.tfstate
+./environments/local/terraform.tfstate.backup
+

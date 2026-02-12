@@ -4,6 +4,9 @@
 k8s는 기본적으로 클러스터가 구축되어 있어야 작동함을 확인할 수 있기 때문에 인프라 내에서 정상적으로 작동하는지 확인을 위해선 로컬에 클러스터를 구축하는 것이 필요함.
 
 #### 구축 방법
+##### 0. 개요
+- 작업은 관리자 권한이 있는 Shell에서 진행되어야 한다
+
 ##### 1. kind를 통한 클러스터 설치 ( Kubernets IN Docker )
 - Docker를 통해 k8s 환경을 구축할 수 있도록 해주는 도구
 - 로컬에서 Docker 사용을 위해 Docker Desktop 활용( 설치 필수 )
@@ -70,12 +73,23 @@ $ terraform init
 $ terraform plan
 $ terraform apply
 ```
+###### 특징
+- 작업이 완료되면 Docker Desktop에서 각 노드에 해당하는 Container가 실행 중인 것을 확인할 수 있음
 ##### 2-1. ArgoCD 구동 확인
 ```
 # ArgoCD 비밀번호 확인
+
+## Mac OS
 $ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+## Windows
+$ [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String((kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}')))
 
 # ArgoCD 접속
+# 포트포워딩 설정
+## 아래 명령어를 그대로 입력하면 8080으로 포트포워딩
+## 다른 포트로 포트포워딩 하고 싶으면 8080 숫자에 다른 포트를 입력할 것
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
 # NodePort 확인 -> http://localhost:확인된 노드 포트
 $ kubectl get svc -n argocd argocd-server
 ```

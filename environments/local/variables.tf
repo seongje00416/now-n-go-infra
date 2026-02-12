@@ -12,7 +12,7 @@ variable "cluster_name" {
 variable "namespaces" {
   description = "생성할 네임스페이스 목록"
   type        = list(string)                        # 타입으로 리스트 형태를 지정할 수 있음
-  default     = ["dev", "staging", "monitoring"]    # 이 경우 기본 값으로 리스트 형태를 제공
+  default     = ["dev", "monitoring"]    # 이 경우 기본 값으로 리스트 형태를 제공
 }
 
 variable "argocd_version" {

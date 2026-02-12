@@ -100,10 +100,10 @@ provider "kubernetes" {
 provider "helm" {
   # 해당 helm 리소스와 연결하기 위한 쿠버네티스 정보 등록
   kubernetes {
-    host                   = kind_cluster.default.cluster_endpoint              # k8s에 설정한 값과 동일하게 설정 == kind_cluster의 값으로 k8s를 설정했으므로 두 설정은 동일
-    cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
+    host                   = kind_cluster.default.endpoint     
     client_certificate     = kind_cluster.default.client_certificate
     client_key             = kind_cluster.default.client_key
+    insecure               = true   # 로컬 개발을 위해 TLS 검증 우회
   }
 }
 
