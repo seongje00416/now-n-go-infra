@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: dev
+data:
+  # Keycloak
+  KEYCLOAK_INTERNAL_URL: "http://keycloak:8080"
+  KEYCLOAK_EXTERNAL_URL: "http://localhost:9090"
+  KEYCLOAK_REALM: "Ticket-Service-Realm"
+  KEYCLOAK_CLIENT_ID: "bff-client"
+  KC_DB_URL: "jdbc:postgresql://postgres-keycloak:5432/keycloak"
+
+  # Kafka (auth)
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+
+  # Redis (auth)
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+
+  # User DB
+  USER_DB_HOST: "user-postgres"
+  USER_DB_PORT: "5432"
+
+  # SMTP
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+
+  # Kafka (business)
+  KAFKA_BUSINESS_BOOTSTRAP_SERVERS: "kafka-business:9092"
+
+  # Redis (business)
+  REDIS_BUSINESS_HOST: "redis-business"
+  REDIS_BUSINESS_PORT: "6379"
+
+  # Booking DB
+  BOOKING_DB_HOST: "postgres-booking"
+  BOOKING_DB_PORT: "5432"
+
+  # S3 (MinIO)
+  S3_ENDPOINT: "http://minio:9000"
+  S3_REGION: "us-east-1"
+  S3_BUCKET: "user-profiles"

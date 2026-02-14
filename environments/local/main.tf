@@ -45,43 +45,38 @@ resource "kind_cluster" "default" {
     # k8s 노드 설정
     node {
       role = "control-plane"                        # 해당 노드의 역할 "control-plane" vs. "worker"
-      
-      # kbueadm 설정을 수정하기 위한 내용
-      #     kind: InitConfiguration: 실행시 초기화
-      #     nodeRegistration: 노드 등록 관련 설정
-      #       kubeletExtraArgs: kubelet에 추가로 넘겨줄 인자들 지정
-      #        node-labels: "ingress-ready=true": 해당 노드에 ingress-ready 라는 라벨을 추가
-      #                     -> Ingress Controller가 이 라벨을 보고 이 노드를 찾아서 배포 진행
-      kubeadm_config_patches = [
-        <<-EOT
-        kind: InitConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
-            node-labels: "ingress-ready=true"
-        EOT
-      ]
-      
-      # extra_port_mappings : 호스트(사용자 PC)와 컨테이너(노드)의 포트 매핑 설정
-      extra_port_mappings {
-        container_port = 80
-        host_port      = 80
-        protocol       = "TCP"
-      }
 
+      # 호스트 ↔ 컨테이너 포트 매핑 (port-forward 없이 localhost로 접근 가능)
       extra_port_mappings {
-        container_port = 443
-        host_port      = 443
+        container_port = 30080                      # NodePort로 노출할 Gateway 포트
+        host_port      = 8080                       # 호스트에서 접근할 포트 (FE 프록시 대상)
+        protocol       = "TCP"
+      }
+      extra_port_mappings {
+        container_port = 30090                      # NodePort로 노출할 Keycloak 포트
+        host_port      = 9090                       # 호스트에서 접근할 포트
+        protocol       = "TCP"
+      }
+      extra_port_mappings {
+        container_port = 30100                      # NodePort로 노출할 MinIO S3 API 포트
+        host_port      = 9000                       # 호스트에서 접근할 포트
+        protocol       = "TCP"
+      }
+      extra_port_mappings {
+        container_port = 30101                      # NodePort로 노출할 MinIO Console 포트
+        host_port      = 9001                       # 호스트에서 접근할 포트
         protocol       = "TCP"
       }
     }
     
-    # Worker 노드 추가
-    node {
-      role = "worker"
-    }
-    
-    node {
-      role = "worker"
+    # Worker 노드 추가 (var.worker_node_count 만큼 생성)
+    #  RAM 16GB 이하: worker_node_count = 1 권장
+    #  RAM 32GB 이상: worker_node_count = 2 권장
+    dynamic "node" {
+      for_each = range(var.worker_node_count)
+      content {
+        role = "worker"
+      }
     }
   }
 }
@@ -93,6 +88,16 @@ provider "kubernetes" {
   cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate          # 클러스터 인증서 등록 -> 신뢰할 수 있는 클러스터인지
   client_certificate     = kind_cluster.default.client_certificate              # 이 코드를 실행하는 사용자 인증서 -> 이 코드가 신뢰된 사용자로부터 정의되고 실행되고 있는지
   client_key             = kind_cluster.default.client_key                      # 위 인증서에 대응하는 키
+}
+
+# Kubectl Provider 설정
+#  kubectl_manifest 리소스에서 사용하는 kubectl provider 설정
+provider "kubectl" {
+  host                   = kind_cluster.default.endpoint
+  cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
+  client_certificate     = kind_cluster.default.client_certificate
+  client_key             = kind_cluster.default.client_key
+  load_config_file       = false
 }
 
 # Helm Provider 설정
@@ -123,38 +128,6 @@ resource "kubernetes_namespace" "namespaces" {
   }
 }
 
-# NGINX Ingress Controller 설치
-#  helm을 사용해 Ngin Ingress Controller 설치
-#  helm: k8s에서 패키지 매니저 역할을 하는 도구, npm과 유사한 역할
-#   helm_release: helm을 사용해 패키지 설치를 정의하는 리소스 타입
-resource "helm_release" "nginx_ingress" {
-  name       = "ingress-nginx"                                      # 릴리즈 이름 설정
-  repository = "https://kubernetes.github.io/ingress-nginx"         # helm_release를 통해 Nginx Ingress Controller 설치를 위한 저장소
-  chart      = "ingress-nginx"                                      # 설치할 차트 이름
-  namespace  = "ingress-nginx"                                      # 설치할 네임스페이스
-  version    = "4.8.3"                                              # 설치할 차트 버전
-  
-  create_namespace = true                                           # 위에서 정의한 네임스페이스가 없으면 만들도록 설정
-  
-  # Helm Chart의 values.yaml 파일에 들어간 설정을 수정하기 위한 블록
-  #  set 블록 하나가 하나의 정보 업데이트를 의미
-  set {
-    name  = "controller.service.type"           # 변경하고자 하는 설정 필드 이름
-    value = "NodePort"                          # 변경하고자 하는 값
-  }
-  
-  set {
-    name  = "controller.hostPort.enabled"
-    value = "true"
-  }
-
-  # 로컬에서 해당 인프라를 구동할 것이기 때문에 NodePort 타입으로 설정하고 호스트 포트를 그대로 사용하도록 설정
-  
-  # 의존성 설정
-  #  이 모든 작업은 kind_cluster.default가 완성되고 그 안에서 이루어져야 하기 때문에 해당 작업에 대한 의존성을 등록
-  depends_on = [kind_cluster.default]
-}
-
 # MetalLB 설정
 #  로컬에서 로드밸런서 타입 서비스를 지원하기 위해 필요
 resource "helm_release" "metallb" {
@@ -163,9 +136,47 @@ resource "helm_release" "metallb" {
   chart      = "metallb"
   namespace  = "metallb-system"
   version    = "0.13.12"
-  
+
   create_namespace = true
-  
+
+  # Speaker (DaemonSet) 리소스 제한 - OOMKilled 방지
+  set {
+    name  = "speaker.resources.limits.memory"
+    value = "256Mi"
+  }
+  set {
+    name  = "speaker.resources.requests.memory"
+    value = "128Mi"
+  }
+  set {
+    name  = "speaker.resources.limits.cpu"
+    value = "200m"
+  }
+  set {
+    name  = "speaker.resources.requests.cpu"
+    value = "100m"
+  }
+
+  # FRR 컨테이너 리소스 제한
+  set {
+    name  = "speaker.frr.resources.limits.memory"
+    value = "128Mi"
+  }
+  set {
+    name  = "speaker.frr.resources.requests.memory"
+    value = "64Mi"
+  }
+
+  # Controller 리소스 제한
+  set {
+    name  = "controller.resources.limits.memory"
+    value = "128Mi"
+  }
+  set {
+    name  = "controller.resources.requests.memory"
+    value = "64Mi"
+  }
+
   depends_on = [kind_cluster.default]
 }
 
