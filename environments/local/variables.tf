@@ -21,6 +21,12 @@ variable "argocd_version" {
   default     = "5.51.6"
 }
 
+variable "worker_node_count" {
+  description = "Worker 노드 수 (RAM 16GB 이하: 1, 32GB 이상: 2)"
+  type        = number
+  default     = 2
+}
+
 variable "github_username" {
   description = "GitHub 사용자명"
   type        = string
