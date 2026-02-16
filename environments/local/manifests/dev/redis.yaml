@@ -24,6 +24,10 @@ spec:
         - 256mb
         - --maxmemory-policy
         - allkeys-lru
+        - --appendonly
+        - "yes"
+        - --appendfsync
+        - everysec
         ports:
         - containerPort: 6379
         env:

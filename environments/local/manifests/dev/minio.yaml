@@ -1,4 +1,4 @@
-# ─── MinIO Deployment ────────────────────────────────────────────────────────
+# ─── MinIO Deployment (TLS) ──────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,6 +23,8 @@ spec:
         - /data
         - --console-address
         - ":9001"
+        - --certs-dir
+        - /certs
         ports:
         - containerPort: 9000
           name: api
@@ -43,12 +45,14 @@ spec:
           httpGet:
             path: /minio/health/ready
             port: 9000
+            scheme: HTTPS
           initialDelaySeconds: 10
           periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /minio/health/live
             port: 9000
+            scheme: HTTPS
           initialDelaySeconds: 10
           periodSeconds: 30
         resources:
@@ -61,9 +65,21 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
+        - name: certs
+          mountPath: /certs
+          readOnly: true
       volumes:
       - name: data
         emptyDir: {}
+      - name: certs
+        secret:
+          secretName: minio-tls
+          items:
+          - key: public.crt
+            path: public.crt
+          - key: private.key
+            path: private.key
+            mode: 0600
 ---
 # ─── MinIO Service (NodePort) ────────────────────────────────────────────────
 apiVersion: v1
@@ -103,7 +119,7 @@ spec:
         command:
         - sh
         - -c
-        - 'until wget -qO- http://minio:9000/minio/health/ready; do echo "waiting for minio..."; sleep 3; done'
+        - 'until wget --no-check-certificate -qO- https://minio:9000/minio/health/ready; do echo "waiting for minio..."; sleep 3; done'
       containers:
       - name: mc
         image: minio/mc:RELEASE.2024-06-12T14-34-03Z
@@ -111,8 +127,8 @@ spec:
         - /bin/sh
         - -c
         - |
-          mc alias set local http://minio:9000 $S3_ACCESS_KEY $S3_SECRET_KEY &&
-          mc mb --ignore-existing local/user-profiles &&
+          mc alias set local https://minio:9000 $S3_ACCESS_KEY $S3_SECRET_KEY --insecure &&
+          mc mb --ignore-existing local/user-profiles --insecure &&
           echo "Bucket 'user-profiles' created successfully"
         env:
         - name: S3_ACCESS_KEY

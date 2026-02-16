@@ -89,6 +89,11 @@ spec:
             configMapKeyRef:
               name: app-config
               key: S3_ENDPOINT
+        - name: S3_PUBLIC_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: S3_PUBLIC_ENDPOINT
         - name: S3_REGION
           valueFrom:
             configMapKeyRef:
@@ -109,6 +114,11 @@ spec:
             secretKeyRef:
               name: app-secret
               key: S3_SECRET_KEY
+        - name: S3_TRUST_ALL_CERTS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: S3_TRUST_ALL_CERTS
         readinessProbe:
           httpGet:
             path: /actuator/health

@@ -11,6 +11,9 @@ terraform.tfstate
 # K8s Secrets (민감정보 포함)
 environments/local/manifests/dev/secret.yaml
 
+# Generated TLS certs
+environments/local/.certs/
+
 # IDE
 .idea/
 .vscode/
