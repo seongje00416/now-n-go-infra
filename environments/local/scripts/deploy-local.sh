@@ -9,6 +9,8 @@
 #   ./deploy-local.sh --apps-only        # 앱 서비스만 재배포
 #   ./deploy-local.sh --infra-only       # 인프라만 배포
 #   ./deploy-local.sh --cleanup          # 전체 리소스 정리
+#   ./deploy-local.sh --pause            # 모든 배포 컨테이너 일시 중지
+#   ./deploy-local.sh --resume           # 일시 중지된 컨테이너 다시 시작
 #   ./deploy-local.sh --status           # 현재 상태 확인
 #
 # 경량 모드 (--light): RAM 16GB 이하 Mac 권장
@@ -56,6 +58,8 @@ parse_args() {
             --apps-only) MODE="apps-only"; shift ;;
             --infra-only) MODE="infra-only"; shift ;;
             --cleanup)   MODE="cleanup"; shift ;;
+            --pause)     MODE="pause"; shift ;;
+            --resume)    MODE="resume"; shift ;;
             --status)    MODE="status"; shift ;;
             --help|-h)   usage; exit 0 ;;
             *) log_error "알 수 없는 옵션: $1"; usage; exit 1 ;;
@@ -72,6 +76,8 @@ usage() {
     echo "  --apps-only    앱 서비스만 재배포"
     echo "  --infra-only   인프라만 배포"
     echo "  --cleanup      전체 리소스 정리"
+    echo "  --pause        모든 배포 컨테이너 일시 중지 (replicas → 0)"
+    echo "  --resume       일시 중지된 컨테이너 다시 시작 (replicas → 1)"
     echo "  --status       현재 배포 상태 확인"
     echo ""
     echo "조합 예시:"
@@ -200,6 +206,43 @@ load_images() {
     log_info "이미지 로드 완료"
 }
 
+# ── MinIO TLS 인증서 생성 & Secret ───────────────────────────────────────────
+ensure_minio_tls() {
+    local CERT_DIR="$INFRA_LOCAL_DIR/.certs/minio"
+
+    # Secret이 이미 존재하면 스킵
+    if kubectl -n "$NAMESPACE" get secret minio-tls >/dev/null 2>&1; then
+        log_info "MinIO TLS Secret이 이미 존재합니다 (스킵)"
+        return
+    fi
+
+    log_info "MinIO TLS 인증서 생성 중..."
+    mkdir -p "$CERT_DIR"
+
+    openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+        -keyout "$CERT_DIR/private.key" \
+        -out "$CERT_DIR/public.crt" \
+        -subj "/CN=minio" \
+        -addext "subjectAltName=DNS:minio,DNS:minio.dev.svc.cluster.local,DNS:localhost,IP:127.0.0.1" \
+        2>/dev/null
+
+    kubectl -n "$NAMESPACE" create secret generic minio-tls \
+        --from-file=public.crt="$CERT_DIR/public.crt" \
+        --from-file=private.key="$CERT_DIR/private.key"
+
+    log_info "MinIO TLS Secret 생성 완료"
+
+    # macOS 키체인 자동 등록
+    if [[ "$(uname)" == "Darwin" ]]; then
+        log_info "macOS 키체인에 MinIO 인증서 등록 중 (sudo 필요)..."
+        sudo security add-trusted-cert -d -r trustRoot \
+            -k /Library/Keychains/System.keychain \
+            "$CERT_DIR/public.crt" 2>/dev/null \
+            && log_info "키체인 등록 완료 (이후 재배포 시 자동 스킵)" \
+            || log_warn "키체인 등록 실패 — 수동으로 등록하세요: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain $CERT_DIR/public.crt"
+    fi
+}
+
 # ── 인프라 배포 ──────────────────────────────────────────────────────────────
 deploy_infra() {
     log_step "인프라 서비스 배포"
@@ -220,6 +263,7 @@ deploy_infra() {
 
     # MinIO (S3-compatible object storage)
     log_info "MinIO (Object Storage) 배포..."
+    ensure_minio_tls
     kubectl apply -f "$MANIFESTS_DIR/minio.yaml"
 
     # Broker 인프라 (경량 모드 시 스킵)
@@ -277,6 +321,61 @@ deploy_apps() {
 }
 
 
+# ── 일시 중지 (replicas → 0) ──────────────────────────────────────────────────
+pause_deployments() {
+    log_step "배포 컨테이너 일시 중지"
+
+    local deployments
+    deployments=$(kubectl -n "$NAMESPACE" get deployments -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
+
+    if [ -z "$deployments" ]; then
+        log_warn "${NAMESPACE} 네임스페이스에 Deployment가 없습니다."
+        return
+    fi
+
+    for dep in $deployments; do
+        log_info "일시 중지: $dep (replicas → 0)"
+        kubectl -n "$NAMESPACE" scale deployment/"$dep" --replicas=0
+    done
+
+    echo ""
+    log_info "모든 Deployment가 일시 중지되었습니다."
+    echo -e "  ${CYAN}다시 시작하려면: $0 --resume${NC}"
+    echo ""
+}
+
+# ── 다시 시작 (replicas → 1) ─────────────────────────────────────────────────
+resume_deployments() {
+    log_step "배포 컨테이너 다시 시작"
+
+    local deployments
+    deployments=$(kubectl -n "$NAMESPACE" get deployments -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
+
+    if [ -z "$deployments" ]; then
+        log_warn "${NAMESPACE} 네임스페이스에 Deployment가 없습니다."
+        return
+    fi
+
+    for dep in $deployments; do
+        local current_replicas
+        current_replicas=$(kubectl -n "$NAMESPACE" get deployment/"$dep" -o jsonpath='{.spec.replicas}' 2>/dev/null)
+        if [ "$current_replicas" = "0" ]; then
+            log_info "다시 시작: $dep (replicas → 1)"
+            kubectl -n "$NAMESPACE" scale deployment/"$dep" --replicas=1
+        else
+            log_info "이미 실행 중: $dep (replicas: $current_replicas)"
+        fi
+    done
+
+    log_info "Deployment Ready 대기 중..."
+    kubectl -n "$NAMESPACE" wait --for=condition=available deployment --all --timeout=180s 2>/dev/null \
+        || log_warn "일부 Deployment가 아직 준비되지 않았을 수 있습니다. --status 로 확인하세요."
+
+    echo ""
+    log_info "모든 Deployment가 다시 시작되었습니다."
+    echo ""
+}
+
 # ── 전체 정리 ────────────────────────────────────────────────────────────────
 cleanup() {
     log_step "로컬 배포 리소스 정리"
@@ -328,8 +427,8 @@ print_status() {
     echo "  Gateway API:   http://localhost:8080   (NodePort 30080)"
     echo "  Keycloak:      http://localhost:9090   (NodePort 30090)"
     echo "    Admin:       admin / admin"
-    echo "  MinIO API:     http://localhost:9000   (NodePort 30100)"
-    echo "  MinIO Console: http://localhost:9001   (NodePort 30101)"
+    echo "  MinIO API:     https://localhost:9000   (NodePort 30100 → host 9000, TLS)"
+    echo "  MinIO Console: https://localhost:9001   (NodePort 30101 → host 9001, TLS)"
     echo "    Login:       minioadmin / minioadmin1234"
     echo ""
     echo "  로그 확인:"
@@ -349,6 +448,14 @@ main() {
         cleanup)
             check_prerequisites
             cleanup
+            ;;
+        pause)
+            kind export kubeconfig --name "$CLUSTER_NAME" 2>/dev/null
+            pause_deployments
+            ;;
+        resume)
+            kind export kubeconfig --name "$CLUSTER_NAME" 2>/dev/null
+            resume_deployments
             ;;
         status)
             kind export kubeconfig --name "$CLUSTER_NAME" 2>/dev/null
