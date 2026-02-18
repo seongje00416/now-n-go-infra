@@ -95,6 +95,16 @@ provider "kubernetes" {
   client_key             = kind_cluster.default.client_key                      # 위 인증서에 대응하는 키
 }
 
+# Kubectl Provider 설정
+#  kubectl_manifest 리소스 사용을 위한 설정(쿠버네티스 YAML manifest를 직접 적용할 수 있게 해주는 서드파티 provider)
+provider "kubectl" {
+  host                   = kind_cluster.default.endpoint
+  cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
+  client_certificate     = kind_cluster.default.client_certificate
+  client_key             = kind_cluster.default.client_key
+  load_config_file       = false
+}
+
 # Helm Provider 설정
 #  Helm을를 사용하기 위한 설정
 provider "helm" {
