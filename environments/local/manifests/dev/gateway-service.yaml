@@ -74,6 +74,31 @@ spec:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: GOOGLE_CLIENT_ID
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: GOOGLE_CLIENT_SECRET
+        - name: SOCIAL_LOGIN_SUCCESS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SOCIAL_LOGIN_SUCCESS_URL
+        - name: SOCIAL_LOGIN_ERROR_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SOCIAL_LOGIN_ERROR_URL
+        - name: SOCIAL_CALLBACK_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SOCIAL_CALLBACK_BASE_URL
         readinessProbe:
           httpGet:
             path: /actuator/health

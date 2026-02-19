@@ -49,7 +49,7 @@ spec:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
-        - name: WARMUP_COMMAND_SERVICE_URL
+        - name: COMMAND_SERVICE_URL
           value: "http://user-command-service:8086"
         - name: S3_ENDPOINT
           valueFrom:

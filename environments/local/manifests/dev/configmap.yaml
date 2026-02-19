@@ -15,7 +15,7 @@ data:
   KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
 
   # Redis (auth)
-  REDIS_HOST: "redis"
+  REDIS_HOST: "redis.dev.svc.cluster.local"
   REDIS_PORT: "6379"
 
   # User DB
@@ -36,6 +36,11 @@ data:
   # Booking DB
   BOOKING_DB_HOST: "postgres-booking"
   BOOKING_DB_PORT: "5432"
+
+  # Social Login
+  SOCIAL_LOGIN_SUCCESS_URL: "https://localhost:3000/dashboard"
+  SOCIAL_LOGIN_ERROR_URL: "https://localhost:3000/login"
+  SOCIAL_CALLBACK_BASE_URL: "http://localhost:8080"
 
   # S3 (MinIO)
   S3_ENDPOINT: "https://minio:9000"
