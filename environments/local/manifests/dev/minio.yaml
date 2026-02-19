@@ -129,7 +129,8 @@ spec:
         - |
           mc alias set local https://minio:9000 $S3_ACCESS_KEY $S3_SECRET_KEY --insecure &&
           mc mb --ignore-existing local/user-profiles --insecure &&
-          echo "Bucket 'user-profiles' created successfully"
+          mc anonymous set download local/user-profiles --insecure &&
+          echo "Bucket 'user-profiles' created with public download policy"
         env:
         - name: S3_ACCESS_KEY
           valueFrom:
