@@ -22,9 +22,9 @@ data:
   USER_DB_HOST: "user-postgres"
   USER_DB_PORT: "5432"
 
-  # SMTP
-  SMTP_HOST: "smtp.gmail.com"
-  SMTP_PORT: "587"
+  # SMTP (MailHog for local dev)
+  SMTP_HOST: "mailhog"
+  SMTP_PORT: "1025"
 
   # Kafka (business)
   KAFKA_BUSINESS_BOOTSTRAP_SERVERS: "kafka-business:9092"

@@ -264,6 +264,13 @@ deploy_infra() {
     # MinIO (S3-compatible object storage)
     log_info "MinIO (Object Storage) 배포..."
     ensure_minio_tls
+   
+    # Job이 이미 존재하면 삭제 (immutable 필드 문제 해결)
+    if kubectl -n "$NAMESPACE" get job minio-create-bucket >/dev/null 2>&1; then
+        log_info "기존 MinIO Job 삭제 중..."
+        kubectl -n "$NAMESPACE" delete job minio-create-bucket --ignore-not-found=true
+    fi
+    
     kubectl apply -f "$MANIFESTS_DIR/minio.yaml"
 
     # Broker 인프라 (경량 모드 시 스킵)
