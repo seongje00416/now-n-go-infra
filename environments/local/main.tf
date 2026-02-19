@@ -49,7 +49,7 @@ resource "kind_cluster" "default" {
       # 호스트 ↔ 컨테이너 포트 매핑 (port-forward 없이 localhost로 접근 가능)
       extra_port_mappings {
         container_port = 30080                      # NodePort로 노출할 Gateway 포트
-        host_port      = 8080                       # 호스트에서 접근할 포트 (FE 프록시 대상)
+        host_port      = 8443                       # 호스트에서 접근할 포트 (FE 프록시 대상)
         protocol       = "TCP"
       }
       extra_port_mappings {
