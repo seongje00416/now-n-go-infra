@@ -5,6 +5,7 @@ environments/local/local-dev-config
 environments/local/terraform.tfstate
 environments/local/terraform.tfstate.backup
 environments/local/terraform.tfstate.*.backup
+environments/local/terraform.tfstate.backup*
 environments/local/terraform.tfvars
 terraform.tfstate
 

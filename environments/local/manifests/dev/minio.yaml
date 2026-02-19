@@ -70,7 +70,8 @@ spec:
           readOnly: true
       volumes:
       - name: data
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: minio-data
       - name: certs
         secret:
           secretName: minio-tls
@@ -79,7 +80,6 @@ spec:
             path: public.crt
           - key: private.key
             path: private.key
-            mode: 0600
 ---
 # ─── MinIO Service (NodePort) ────────────────────────────────────────────────
 apiVersion: v1
@@ -141,3 +141,15 @@ spec:
             secretKeyRef:
               name: app-secret
               key: S3_SECRET_KEY
+---
+# ─── MinIO PVC ────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+  namespace: dev
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi

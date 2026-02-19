@@ -1,9 +1,10 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis-business
   namespace: dev
 spec:
+  serviceName: redis-business
   replicas: 1
   selector:
     matchLabels:
@@ -44,6 +45,17 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 256Mi
 ---
 apiVersion: v1
 kind: Service
@@ -56,3 +68,4 @@ spec:
   ports:
   - port: 6379
     targetPort: 6379
+  clusterIP: None
