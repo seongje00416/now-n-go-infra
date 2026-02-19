@@ -424,7 +424,7 @@ print_status() {
     echo ""
     echo "  NodePort로 직접 접근 (port-forward 불필요):"
     echo ""
-    echo "  Gateway API:   http://localhost:8080   (NodePort 30080)"
+    echo "  Gateway API:   http://localhost:8443   (NodePort 30080)"
     echo "  Keycloak:      http://localhost:9090   (NodePort 30090)"
     echo "    Admin:       admin / admin"
     echo "  MinIO API:     https://localhost:9000   (NodePort 30100 → host 9000, TLS)"
