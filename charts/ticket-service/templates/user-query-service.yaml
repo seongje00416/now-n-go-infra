@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: user-query-service
-        image: {{ .Values.registry }}/user-query-service:{{ .Values.beImageTag }}
+        image: {{ .Values.registry }}/user-query-service:{{ .Values.userQueryImageTag }}
         imagePullPolicy: Always
         ports:
         - containerPort: 8087

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: keycloak
-        image: {{ .Values.registry }}/keycloak-local:{{ .Values.beImageTag }}
+        image: {{ .Values.registry }}/keycloak-local:{{ .Values.keycloakImageTag }}
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

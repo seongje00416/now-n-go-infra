@@ -76,6 +76,11 @@ resource "kind_cluster" "default" {
         host_port      = 9001                       # 호스트에서 접근할 포트
         protocol       = "TCP"
       }
+      extra_port_mappings {
+        container_port = 30030                      # NodePort로 노출할 Frontend 포트
+        host_port      = 3000                       # 호스트에서 접근할 포트
+        protocol       = "TCP"
+      }
     }
     
     # Worker 노드 추가 (var.worker_node_count 만큼 생성)
@@ -114,6 +119,16 @@ EOF
         "
       done
     EOT
+  }
+}
+
+# Jenkins + Registry 컨테이너를 Kind 네트워크에 연결
+resource "null_resource" "jenkins_compose" {
+  depends_on = [kind_cluster.default]
+
+  provisioner "local-exec" {
+    command     = "docker compose up -d"
+    working_dir = "${path.module}/../../jenkins"
   }
 }
 
@@ -283,6 +298,64 @@ resource "helm_release" "local_path_provisioner" {
   chart      = "local-path-provisioner"
   namespace  = "kube-system"
   version    = "0.0.26"
-  
+
   depends_on = [kind_cluster.default]
+}
+
+# app-secret (dev 네임스페이스 서비스용 크리덴셜)
+resource "kubernetes_secret" "app_secret" {
+  metadata {
+    name      = "app-secret"
+    namespace = "dev"
+  }
+
+  data = {
+    # Keycloak DB
+    POSTGRES_USER     = "keycloak"
+    POSTGRES_PASSWORD = "keycloak1234"
+
+    # Keycloak Admin
+    KC_BOOTSTRAP_ADMIN_USERNAME = "admin"
+    KC_BOOTSTRAP_ADMIN_PASSWORD = "admin"
+
+    # BFF Client
+    KEYCLOAK_CLIENT_SECRET = "bff-secret-local-dev"
+
+    # Redis (auth)
+    REDIS_PASSWORD = "redis-secret"
+
+    # User DB
+    USER_DB_USER     = "userservice"
+    USER_DB_PASSWORD = "userservice1234"
+
+    # SMTP
+    SMTP_USER              = "waninokow@gmail.com"
+    SMTP_PASSWORD          = "urdh iuzk rntm ucyv"
+    SMTP_FROM              = "waninokow@gmail.com"
+    SMTP_FROM_DISPLAY_NAME = "Ticket-Service"
+
+    # Internal API Key
+    INTERNAL_API_KEY = "k8s-internal-api-key-s3cur3"
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID     = "140364443613-ff37u5fg1vbo114p5ah1pfn6erjhug99.apps.googleusercontent.com"
+    GOOGLE_CLIENT_SECRET = "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"
+
+    # Redis (business)
+    REDIS_BUSINESS_PASSWORD = "redis-biz-secret"
+
+    # Booking DB
+    BOOKING_DB_USER     = "bookingservice"
+    BOOKING_DB_PASSWORD = "bookingservice1234"
+
+    # Encryption Keys (AES-256 + HMAC)
+    ENCRYPTION_AES_KEY  = "gdP8yw1/oi3NNCfC5H/2/URZrhzSONpt8K/cCB1F9gk="
+    ENCRYPTION_HMAC_KEY = "6ZtrrKC4Tg5NLKFPf1g8oivr64bNSJIXHpeJfE/Xcws="
+
+    # S3 (MinIO)
+    S3_ACCESS_KEY = "minioadmin"
+    S3_SECRET_KEY = "minioadmin1234"
+  }
+
+  depends_on = [kubernetes_namespace.namespaces]
 }

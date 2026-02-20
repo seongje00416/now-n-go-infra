@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: gateway-service
-        image: {{ .Values.registry }}/gateway-service:{{ .Values.beImageTag }}
+        image: {{ .Values.registry }}/gateway-service:{{ .Values.gatewayImageTag }}
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
