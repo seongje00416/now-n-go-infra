@@ -5,7 +5,7 @@ registry: localhost:5000
 gatewayImageTag: "2"
 userCommandImageTag: "4"
 userQueryImageTag: "5"
-emailImageTag: "39"
+emailImageTag: "6"
 keycloakImageTag: "39"
 
 # FE 이미지 태그 (Jenkins FE 파이프라인에서 자동 업데이트)
