@@ -25,6 +25,10 @@ terraform {
       source  = "gavinbunney/kubectl"
       version = "~> 1.14"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
   }
 }
 
@@ -47,6 +51,11 @@ resource "kind_cluster" "default" {
       role = "control-plane"                        # 해당 노드의 역할 "control-plane" vs. "worker"
 
       # 호스트 ↔ 컨테이너 포트 매핑 (port-forward 없이 localhost로 접근 가능)
+      extra_port_mappings {
+        container_port = 30070                      # NodePort로 노출할 ArgoCD 포트
+        host_port      = 8080                       # 호스트에서 접근할 포트
+        protocol       = "TCP"
+      }
       extra_port_mappings {
         container_port = 30080                      # NodePort로 노출할 Gateway 포트
         host_port      = 8443                       # 호스트에서 접근할 포트 (FE 프록시 대상)
@@ -78,6 +87,33 @@ resource "kind_cluster" "default" {
         role = "worker"
       }
     }
+
+    # 로컬 Docker Registry 미러링 (localhost:5000 → local-registry 컨테이너)
+    containerd_config_patches = [
+      <<-TOML
+        [plugins."io.containerd.grpc.v1.cri".registry]
+          config_path = "/etc/containerd/certs.d"
+      TOML
+    ]
+  }
+}
+
+# Kind 노드에 로컬 레지스트리 설정 배포 (클러스터 생성 후 실행)
+resource "null_resource" "registry_config" {
+  depends_on = [kind_cluster.default]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      for node in $(kind get nodes --name ${var.cluster_name}); do
+        docker exec "$node" bash -c "
+          mkdir -p /etc/containerd/certs.d/localhost:5000
+          cat > /etc/containerd/certs.d/localhost:5000/hosts.toml <<'EOF'
+[host.\"http://local-registry:5000\"]
+  capabilities = [\"pull\", \"resolve\", \"push\"]
+EOF
+        "
+      done
+    EOT
   }
 }
 
