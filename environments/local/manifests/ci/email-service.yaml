@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: email-service
-        image: localhost:5000/email-service:26
+        image: localhost:5000/email-service:27
         imagePullPolicy: Always
         ports:
         - containerPort: 8085
