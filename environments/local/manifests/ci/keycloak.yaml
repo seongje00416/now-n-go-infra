@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: keycloak
-        image: localhost:5000/keycloak-local:18
+        image: localhost:5000/keycloak-local:19
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
