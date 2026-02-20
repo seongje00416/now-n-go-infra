@@ -19,8 +19,7 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/sta
     && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
     && rm kubectl
 
-# Jenkins 유저를 docker 그룹에 추가 (소켓 접근 권한)
-RUN groupadd -f docker && usermod -aG docker jenkins
+# docker 그룹은 docker-compose.yml의 group_add로 런타임에 추가
 
 USER jenkins
 

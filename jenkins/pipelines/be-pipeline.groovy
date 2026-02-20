@@ -73,13 +73,13 @@ pipeline {
                 }
                 stage('keycloak') {
                     steps {
-                        dir('be') {
+                        dir('be/common/auth/keycloak') {
                             sh """
                                 cat > Dockerfile.keycloak <<'DEOF'
 FROM quay.io/keycloak/keycloak:26.0
-COPY common/auth/keycloak/theme/ /opt/keycloak/themes/
-COPY common/auth/keycloak/docker/keycloak/realm-export.json /tmp/realm-export-template.json
-COPY common/auth/keycloak/docker/keycloak/init-realm.sh /tmp/init-realm.sh
+COPY theme/ /opt/keycloak/themes/
+COPY docker/keycloak/realm-export.json /tmp/realm-export-template.json
+COPY docker/keycloak/init-realm.sh /tmp/init-realm.sh
 USER root
 RUN chmod +x /tmp/init-realm.sh
 USER keycloak
