@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: gateway-service
-        image: localhost:5000/gateway-service:17
+        image: localhost:5000/gateway-service:18
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
