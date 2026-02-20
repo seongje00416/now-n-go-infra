@@ -1,0 +1,9 @@
+workflow-aggregator
+git
+pipeline-stage-view
+docker-workflow
+configuration-as-code
+credentials-binding
+timestamper
+ws-cleanup
+job-dsl
