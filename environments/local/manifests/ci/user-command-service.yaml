@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: user-command-service
-        image: localhost:5000/user-command-service:22
+        image: localhost:5000/user-command-service:23
         imagePullPolicy: Always
         ports:
         - containerPort: 8086
