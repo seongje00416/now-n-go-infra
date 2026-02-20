@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: user-query-service
-        image: localhost:5000/user-query-service:8
+        image: localhost:5000/user-query-service:9
         imagePullPolicy: Always
         ports:
         - containerPort: 8087
