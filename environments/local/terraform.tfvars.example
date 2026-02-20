@@ -1,0 +1,7 @@
+cluster_name      = "local-dev"
+namespaces        = ["dev", "monitoring", "logging"]
+worker_node_count = 1                                    # RAM 16GB: 1, RAM 32GB+: 2
+
+# 아래 값은 본인의 것으로 채워서 terraform.tfvars로 복사할 것
+github_username = "Github 사용자명"
+github_token    = "ghp_xxxxxxxxxxxxxxxxxxxx"
