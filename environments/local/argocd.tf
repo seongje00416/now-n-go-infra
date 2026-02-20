@@ -62,7 +62,10 @@ resource "kubectl_manifest" "argocd_application_ci" {
       source:
         repoURL: https://github.com/MZC-Final-Project/mzc-final-project-infra
         targetRevision: develop
-        path: environments/local/manifests/ci
+        path: charts/ticket-service
+        helm:
+          valueFiles:
+          - values.yaml
       destination:
         server: https://kubernetes.default.svc
         namespace: dev

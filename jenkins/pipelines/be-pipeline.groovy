@@ -105,20 +105,15 @@ DEOF
                             credentialsId: 'github-pat'
 
                         sh """
-                            cd environments/local/manifests/ci
-
-                            sed -i 's|image: ${REGISTRY}/gateway-service:.*|image: ${REGISTRY}/gateway-service:${IMAGE_TAG}|' gateway-service.yaml
-                            sed -i 's|image: ${REGISTRY}/user-command-service:.*|image: ${REGISTRY}/user-command-service:${IMAGE_TAG}|' user-command-service.yaml
-                            sed -i 's|image: ${REGISTRY}/user-query-service:.*|image: ${REGISTRY}/user-query-service:${IMAGE_TAG}|' user-query-service.yaml
-                            sed -i 's|image: ${REGISTRY}/email-service:.*|image: ${REGISTRY}/email-service:${IMAGE_TAG}|' email-service.yaml
-                            sed -i 's|image: ${REGISTRY}/keycloak-local:.*|image: ${REGISTRY}/keycloak-local:${IMAGE_TAG}|' keycloak.yaml
+                            cd charts/ticket-service
+                            sed -i 's|beImageTag:.*|beImageTag: "${IMAGE_TAG}"|' values.yaml
                         """
 
                         sh """
                             git config user.name 'Jenkins CI'
                             git config user.email 'jenkins@local'
                             git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/MZC-Final-Project/mzc-final-project-infra.git
-                            git add environments/local/manifests/ci/
+                            git add charts/ticket-service/values.yaml
                             git commit -m "ci: BE 이미지 태그 업데이트 → ${IMAGE_TAG}" || echo 'No changes to commit'
                             git push origin develop
                         """

@@ -58,23 +58,26 @@ EOF
 
         stage('Update Manifests') {
             steps {
-                dir('infra') {
-                    git branch: 'develop',
-                        url: "${INFRA_REPO_URL}",
-                        credentialsId: 'github-pat'
+                withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    dir('infra') {
+                        git branch: 'develop',
+                            url: "${INFRA_REPO_URL}",
+                            credentialsId: 'github-pat'
 
-                    sh """
-                        cd environments/local/manifests/ci
-                        sed -i 's|image: ${REGISTRY}/frontend:.*|image: ${REGISTRY}/frontend:${IMAGE_TAG}|' frontend-service.yaml
-                    """
+                        sh """
+                            cd charts/ticket-service
+                            sed -i 's|feImageTag:.*|feImageTag: "${IMAGE_TAG}"|' values.yaml
+                        """
 
-                    sh """
-                        git config user.name 'Jenkins CI'
-                        git config user.email 'jenkins@local'
-                        git add environments/local/manifests/ci/
-                        git commit -m "ci: FE 이미지 태그 업데이트 → ${IMAGE_TAG}" || echo 'No changes to commit'
-                        git push origin develop
-                    """
+                        sh """
+                            git config user.name 'Jenkins CI'
+                            git config user.email 'jenkins@local'
+                            git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/MZC-Final-Project/mzc-final-project-infra.git
+                            git add charts/ticket-service/values.yaml
+                            git commit -m "ci: FE 이미지 태그 업데이트 → ${IMAGE_TAG}" || echo 'No changes to commit'
+                            git push origin develop
+                        """
+                    }
                 }
             }
         }
