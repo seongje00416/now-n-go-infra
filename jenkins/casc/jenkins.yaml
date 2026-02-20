@@ -41,43 +41,43 @@ unclassified:
 jobs:
   - script: |
       pipelineJob('be-pipeline') {
-        description('BE 서비스 CI 파이프라인 — develop 브랜치 polling')
+        description('BE 서비스 CI 파이프라인 — BE repo develop 브랜치 polling')
         definition {
           cpsScm {
             scm {
               git {
                 remote {
-                  url('${GITHUB_INFRA_REPO_URL}')
+                  url('${GITHUB_BE_REPO_URL}')
                   credentials('github-pat')
                 }
                 branch('develop')
               }
             }
-            scriptPath('jenkins/pipelines/be-pipeline.groovy')
+            scriptPath('Jenkinsfile')
           }
         }
         triggers {
-          scm('H/5 * * * *')
+          scm('H/1 * * * *')
         }
       }
   - script: |
       pipelineJob('fe-pipeline') {
-        description('FE 서비스 CI 파이프라인 — develop 브랜치 polling')
+        description('FE 서비스 CI 파이프라인 — FE repo develop 브랜치 polling')
         definition {
           cpsScm {
             scm {
               git {
                 remote {
-                  url('${GITHUB_INFRA_REPO_URL}')
+                  url('${GITHUB_FE_REPO_URL}')
                   credentials('github-pat')
                 }
                 branch('develop')
               }
             }
-            scriptPath('jenkins/pipelines/fe-pipeline.groovy')
+            scriptPath('Jenkinsfile')
           }
         }
         triggers {
-          scm('H/5 * * * *')
+          scm('H/1 * * * *')
         }
       }
