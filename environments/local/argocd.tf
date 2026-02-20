@@ -13,26 +13,19 @@ resource "helm_release" "argocd" {
     name  = "server.service.type"
     value = "NodePort"
   }
-  
-  # Ingress 사용하려면 이 설정 추가
+
   set {
-    name  = "server.ingress.enabled"
-    value = "true"
+    name  = "server.service.nodePortHttp"
+    value = "30070"
   }
-  
+
   set {
-    name  = "server.ingress.ingressClassName"
-    value = "nginx"
-  }
-  
-  set {
-    name  = "server.ingress.hosts[0]"
-    value = "argocd.local"
+    name  = "server.service.nodePortHttps"
+    value = "30443"
   }
   
   depends_on = [
-    kind_cluster.default,
-    helm_release.nginx_ingress
+    kind_cluster.default
   ]
 }
 
