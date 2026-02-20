@@ -61,6 +61,7 @@ parse_args() {
             --pause)     MODE="pause"; shift ;;
             --resume)    MODE="resume"; shift ;;
             --status)    MODE="status"; shift ;;
+            --mailhog)   MODE="mailhog"; shift ;;
             --help|-h)   usage; exit 0 ;;
             *) log_error "알 수 없는 옵션: $1"; usage; exit 1 ;;
         esac
@@ -79,6 +80,7 @@ usage() {
     echo "  --pause        모든 배포 컨테이너 일시 중지 (replicas → 0)"
     echo "  --resume       일시 중지된 컨테이너 다시 시작 (replicas → 1)"
     echo "  --status       현재 배포 상태 확인"
+    echo "  --mailhog      메일호그 웹 UI 포트 포워딩 (localhost:30025)"
     echo ""
     echo "조합 예시:"
     echo "  $0 --light              경량 전체 배포"
@@ -273,6 +275,10 @@ deploy_infra() {
     
     kubectl apply -f "$MANIFESTS_DIR/minio.yaml"
 
+    # MailHog (Email testing)
+    log_info "MailHog (Email Testing) 배포..."
+    kubectl apply -f "$MANIFESTS_DIR/mailhog.yaml"
+
     # Broker 인프라 (경량 모드 시 스킵)
     if [ "$LIGHT_MODE" = false ]; then
         log_info "Broker 인프라 배포 (Kafka-Business, Redis-Business, PostgreSQL-Booking)..."
@@ -290,6 +296,7 @@ deploy_infra() {
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=kafka --timeout=120s 2>/dev/null || true
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=redis --timeout=60s 2>/dev/null || true
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=minio --timeout=60s 2>/dev/null || true
+    kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=mailhog --timeout=30s 2>/dev/null || true
 
     # Keycloak 배포
     log_info "Keycloak 배포..."
@@ -383,6 +390,27 @@ resume_deployments() {
     echo ""
 }
 
+# ── 메일호그 포트 포워딩 ─────────────────────────────────────────────────────
+start_mailhog_port_forward() {
+    log_step "메일호그 포트 포워딩"
+
+    # 메일호그가 배포되어 있는지 확인
+    if ! kubectl -n "$NAMESPACE" get svc mailhog >/dev/null 2>&1; then
+        log_error "메일호그가 배포되어 있지 않습니다. 먼저 인프라를 배포하세요:"
+        echo "  $0 --infra-only"
+        exit 1
+    fi
+
+    log_info "메일호그 웹 UI 포트 포워딩 시작..."
+    log_info "접속 URL: http://localhost:30025"
+    echo ""
+    echo -e "  ${YELLOW}포트 포워딩을 중지하려면 Ctrl+C를 누르세요.${NC}"
+    echo ""
+
+    # 포트 포워딩 실행 (이 함수는 블로킹됨)
+    kubectl port-forward -n "$NAMESPACE" svc/mailhog 30025:8025
+}
+
 # ── 전체 정리 ────────────────────────────────────────────────────────────────
 cleanup() {
     log_step "로컬 배포 리소스 정리"
@@ -422,6 +450,7 @@ print_status() {
     echo "  User Query Service    :  128Mi     384Mi"
     echo "  Email Service         :  128Mi     384Mi"
     echo "  MinIO                 :  128Mi     256Mi"
+    echo "  MailHog               :   32Mi      64Mi"
     echo "  ────────────────────────────────────────────"
     echo -e "  ${GREEN}합계                    : 1.3GB     3.1GB${NC}"
     echo -e "  ${YELLOW}+ Kind 노드 + Docker ≈ 총 5~6GB 사용${NC}"
@@ -437,6 +466,8 @@ print_status() {
     echo "  MinIO API:     https://localhost:9000   (NodePort 30100 → host 9000, TLS)"
     echo "  MinIO Console: https://localhost:9001   (NodePort 30101 → host 9001, TLS)"
     echo "    Login:       minioadmin / minioadmin1234"
+    echo "  MailHog:       http://localhost:30025   (NodePort 30025)"
+    echo "    Web UI:      메일 확인용 웹 인터페이스"
     echo ""
     echo "  로그 확인:"
     echo "    kubectl -n dev logs -f deploy/gateway-service"
@@ -467,6 +498,10 @@ main() {
         status)
             kind export kubeconfig --name "$CLUSTER_NAME" 2>/dev/null
             print_status
+            ;;
+        mailhog)
+            kind export kubeconfig --name "$CLUSTER_NAME" 2>/dev/null
+            start_mailhog_port_forward
             ;;
         infra-only)
             check_prerequisites
