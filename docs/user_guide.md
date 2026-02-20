@@ -70,8 +70,12 @@ terraform apply
 - MetalLB (로드밸런서)
 - Local Path Provisioner (스토리지)
 - ArgoCD (GitOps CD)
-- app-secret (서비스 크리덴셜)
+- app-secret (서비스 크리덴셜 — `main.tf`에서 관리)
+- minio-tls (TLS 인증서 — Helm 차트에서 자동 생성)
 - Jenkins + Registry 컨테이너 (Kind 네트워크 연결)
+
+> 시크릿 값을 변경하려면 `environments/local/main.tf`의 `kubernetes_secret.app_secret` 리소스를 수정 후 `terraform apply`합니다.
+> 필요한 키 목록은 `charts/ticket-service/secret.example.yaml`을 참고하세요.
 
 ### 2-2. 배포 확인
 
@@ -113,8 +117,13 @@ BE repo develop 머지
   → ArgoCD가 변경 감지 → 해당 서비스만 재배포
 ```
 
+**변경 감지 기준:**
 - 서비스 디렉토리(`domain/auth/gateway-service/` 등)만 변경 → 해당 서비스만 빌드
-- 공통 모듈(`common/`)이나 `build.gradle` 변경 → 전체 서비스 빌드
+- 공통 모듈(`common/crypto/`, `common/event/`, `common/broker/`)이나 `build.gradle` 변경 → 전체 서비스 빌드
+
+**대상 서비스 (5개):**
+- gateway-service, user-command-service, user-query-service, email-service, keycloak
+- 각 서비스별 독립 이미지 태그가 `values.yaml`에서 관리됨
 
 ### FE (프론트엔드)
 
@@ -139,11 +148,11 @@ mzc-final-project-infra/
 ├── charts/ticket-service/
 │   ├── Chart.yaml           # Helm 차트 메타데이터
 │   ├── values.yaml          # 이미지 태그 (Jenkins가 자동 업데이트)
+│   ├── secret.example.yaml  # secret 예시 파일 (templates/ 밖에 위치)
 │   └── templates/           # K8s 매니페스트 템플릿
-│       ├── secret.yaml          # app-secret (gitignored)
-│       ├── secret.example.yaml  # secret 예시 파일
 │       ├── gateway-service.yaml
 │       ├── frontend-service.yaml
+│       ├── minio-tls.yaml       # MinIO TLS 인증서 (자동 생성)
 │       └── ...
 ├── jenkins/
 │   ├── Dockerfile           # Jenkins 이미지 정의
@@ -203,6 +212,19 @@ kubectl -n dev describe pod <pod-name>
 ```
 
 `secret "app-secret" not found` 에러인 경우 → `terraform apply`가 정상 완료되었는지 확인
+
+### app-secret이 changeme 값으로 덮어씌워진 경우
+
+`secret.example.yaml`이 실수로 `templates/` 안에 들어가면 Helm이 실제 Secret으로 렌더링하여 Terraform이 관리하는 진짜 시크릿을 덮어씁니다.
+`secret.example.yaml`은 반드시 `charts/ticket-service/` 루트에 위치해야 합니다.
+
+```bash
+# 시크릿 복원
+cd environments/local
+terraform apply -target=kubernetes_secret.app_secret
+# 영향받은 Pod 재시작
+kubectl -n dev rollout restart deploy keycloak user-command-service
+```
 
 ### Jenkins 파이프라인이 안 돌 때
 
