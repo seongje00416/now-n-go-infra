@@ -2,7 +2,7 @@
 registry: localhost:5000
 
 # BE 이미지 태그 (Jenkins BE 파이프라인에서 자동 업데이트)
-beImageTag: "1"
+beImageTag: "28"
 
 # FE 이미지 태그 (Jenkins FE 파이프라인에서 자동 업데이트)
 feImageTag: "1"
