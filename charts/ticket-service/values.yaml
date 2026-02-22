@@ -1,0 +1,12 @@
+# Docker 이미지 레지스트리
+registry: localhost:5000
+
+# BE 서비스별 이미지 태그 (Jenkins BE 파이프라인에서 변경된 서비스만 업데이트)
+gatewayImageTag: "7"
+userCommandImageTag: "7"
+userQueryImageTag: "7"
+emailImageTag: "7"
+keycloakImageTag: "8"
+
+# FE 이미지 태그 (Jenkins FE 파이프라인에서 자동 업데이트)
+feImageTag: "1"

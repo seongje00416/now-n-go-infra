@@ -1,0 +1,83 @@
+jenkins:
+  systemMessage: "Jenkins CI/CD for MZC Final Project"
+  numExecutors: 2
+  mode: NORMAL
+  scmCheckoutRetryCount: 3
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID:-admin}"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: "REGISTRY_URL"
+            value: "localhost:5000"
+          - key: "GIT_BRANCH"
+            value: "develop"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-pat"
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "GitHub PAT for repo access"
+
+unclassified:
+  location:
+    url: "http://localhost:8000/"
+
+jobs:
+  - script: |
+      pipelineJob('be-pipeline') {
+        description('BE 서비스 CI 파이프라인 — BE repo develop 브랜치 polling')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('${GITHUB_BE_REPO_URL}')
+                  credentials('github-pat')
+                }
+                branch('develop')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+        triggers {
+          scm('H/1 * * * *')
+        }
+      }
+  - script: |
+      pipelineJob('fe-pipeline') {
+        description('FE 서비스 CI 파이프라인 — FE repo develop 브랜치 polling')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('${GITHUB_FE_REPO_URL}')
+                  credentials('github-pat')
+                }
+                branch('develop')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+        triggers {
+          scm('H/1 * * * *')
+        }
+      }

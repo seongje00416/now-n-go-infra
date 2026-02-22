@@ -25,6 +25,10 @@ terraform {
       source  = "gavinbunney/kubectl"
       version = "~> 1.14"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
   }
 }
 
@@ -48,6 +52,11 @@ resource "kind_cluster" "default" {
 
       # 호스트 ↔ 컨테이너 포트 매핑 (port-forward 없이 localhost로 접근 가능)
       extra_port_mappings {
+        container_port = 30070                      # NodePort로 노출할 ArgoCD 포트
+        host_port      = 8080                       # 호스트에서 접근할 포트
+        protocol       = "TCP"
+      }
+      extra_port_mappings {
         container_port = 30080                      # NodePort로 노출할 Gateway 포트
         host_port      = 8443                       # 호스트에서 접근할 포트 (FE 프록시 대상)
         protocol       = "TCP"
@@ -68,8 +77,8 @@ resource "kind_cluster" "default" {
         protocol       = "TCP"
       }
       extra_port_mappings {
-        container_port = 30025                      # NodePort로 노출할 MailHog 웹 UI 포트
-        host_port      = 30025                      # 호스트에서 접근할 포트
+        container_port = 30030                      # NodePort로 노출할 Frontend 포트
+        host_port      = 3000                       # 호스트에서 접근할 포트
         protocol       = "TCP"
       }
     }
@@ -83,6 +92,43 @@ resource "kind_cluster" "default" {
         role = "worker"
       }
     }
+
+    # 로컬 Docker Registry 미러링 (localhost:5000 → local-registry 컨테이너)
+    containerd_config_patches = [
+      <<-TOML
+        [plugins."io.containerd.grpc.v1.cri".registry]
+          config_path = "/etc/containerd/certs.d"
+      TOML
+    ]
+  }
+}
+
+# Kind 노드에 로컬 레지스트리 설정 배포 (클러스터 생성 후 실행)
+resource "null_resource" "registry_config" {
+  depends_on = [kind_cluster.default]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      for node in $(kind get nodes --name ${var.cluster_name}); do
+        docker exec "$node" bash -c "
+          mkdir -p /etc/containerd/certs.d/localhost:5000
+          cat > /etc/containerd/certs.d/localhost:5000/hosts.toml <<'EOF'
+[host.\"http://local-registry:5000\"]
+  capabilities = [\"pull\", \"resolve\", \"push\"]
+EOF
+        "
+      done
+    EOT
+  }
+}
+
+# Jenkins + Registry 컨테이너를 Kind 네트워크에 연결
+resource "null_resource" "jenkins_compose" {
+  depends_on = [kind_cluster.default]
+
+  provisioner "local-exec" {
+    command     = "docker compose up -d"
+    working_dir = "${path.module}/../../jenkins"
   }
 }
 
@@ -96,7 +142,7 @@ provider "kubernetes" {
 }
 
 # Kubectl Provider 설정
-#  kubectl_manifest 리소스에서 사용하는 kubectl provider 설정
+#  kubectl_manifest 리소스 사용을 위한 설정(쿠버네티스 YAML manifest를 직접 적용할 수 있게 해주는 서드파티 provider)
 provider "kubectl" {
   host                   = kind_cluster.default.endpoint
   cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
@@ -252,6 +298,64 @@ resource "helm_release" "local_path_provisioner" {
   chart      = "local-path-provisioner"
   namespace  = "kube-system"
   version    = "0.0.26"
-  
+
   depends_on = [kind_cluster.default]
+}
+
+# app-secret (dev 네임스페이스 서비스용 크리덴셜)
+resource "kubernetes_secret" "app_secret" {
+  metadata {
+    name      = "app-secret"
+    namespace = "dev"
+  }
+
+  data = {
+    # Keycloak DB
+    POSTGRES_USER     = "keycloak"
+    POSTGRES_PASSWORD = "keycloak1234"
+
+    # Keycloak Admin
+    KC_BOOTSTRAP_ADMIN_USERNAME = "admin"
+    KC_BOOTSTRAP_ADMIN_PASSWORD = "admin"
+
+    # BFF Client
+    KEYCLOAK_CLIENT_SECRET = "bff-secret-local-dev"
+
+    # Redis (auth)
+    REDIS_PASSWORD = "redis-secret"
+
+    # User DB
+    USER_DB_USER     = "userservice"
+    USER_DB_PASSWORD = "userservice1234"
+
+    # SMTP
+    SMTP_USER              = "waninokow@gmail.com"
+    SMTP_PASSWORD          = "urdh iuzk rntm ucyv"
+    SMTP_FROM              = "waninokow@gmail.com"
+    SMTP_FROM_DISPLAY_NAME = "Ticket-Service"
+
+    # Internal API Key
+    INTERNAL_API_KEY = "k8s-internal-api-key-s3cur3"
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID     = "140364443613-ff37u5fg1vbo114p5ah1pfn6erjhug99.apps.googleusercontent.com"
+    GOOGLE_CLIENT_SECRET = "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"
+
+    # Redis (business)
+    REDIS_BUSINESS_PASSWORD = "redis-biz-secret"
+
+    # Booking DB
+    BOOKING_DB_USER     = "bookingservice"
+    BOOKING_DB_PASSWORD = "bookingservice1234"
+
+    # Encryption Keys (AES-256 + HMAC)
+    ENCRYPTION_AES_KEY  = "gdP8yw1/oi3NNCfC5H/2/URZrhzSONpt8K/cCB1F9gk="
+    ENCRYPTION_HMAC_KEY = "6ZtrrKC4Tg5NLKFPf1g8oivr64bNSJIXHpeJfE/Xcws="
+
+    # S3 (MinIO)
+    S3_ACCESS_KEY = "minioadmin"
+    S3_SECRET_KEY = "minioadmin1234"
+  }
+
+  depends_on = [kubernetes_namespace.namespaces]
 }
