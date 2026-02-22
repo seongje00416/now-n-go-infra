@@ -35,15 +35,17 @@ metadata:
   name: mailhog
   namespace: dev
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: mailhog
   ports:
   - name: smtp
     port: 1025
     targetPort: 1025
+    nodePort: 30026
     protocol: TCP
   - name: http
     port: 8025
     targetPort: 8025
+    nodePort: 30025
     protocol: TCP

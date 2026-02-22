@@ -482,7 +482,7 @@ print_status() {
     echo "  MinIO API:     https://localhost:9000   (NodePort 30100 → host 9000, TLS)"
     echo "  MinIO Console: https://localhost:9001   (NodePort 30101 → host 9001, TLS)"
     echo "    Login:       minioadmin / minioadmin1234"
-    echo "  MailHog:       http://localhost:30025   (NodePort 30025)"
+    echo "  MailHog:       http://localhost:8025    (NodePort 30025 → host 8025)"
     echo "    Web UI:      메일 확인용 웹 인터페이스"
     echo ""
     echo "  로그 확인:"
