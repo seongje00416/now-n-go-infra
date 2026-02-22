@@ -29,6 +29,7 @@ MANIFESTS_DIR="$INFRA_LOCAL_DIR/manifests/dev"
 BE_PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../../mzc-final-project-be" && pwd)"
 BE_AUTH_DIR="$BE_PROJECT_DIR/common/auth/keycloak"
 BE_DOMAIN_AUTH_DIR="$BE_PROJECT_DIR/domain/auth"
+BE_DOMAIN_PRODUCTS_DIR="$BE_PROJECT_DIR/domain/products"
 
 CLUSTER_NAME="local-dev"
 NAMESPACE="dev"
@@ -191,6 +192,14 @@ DOCKERFILE
     log_info "Email Service 이미지 빌드 중..."
     docker build -t email-service:local -f "$BE_DOMAIN_AUTH_DIR/email-service/Dockerfile" "$BE_PROJECT_DIR"
 
+    # 6) Product Service
+    log_info "Product Service 이미지 빌드 중..."
+    docker build -t product-service:local -f "$BE_DOMAIN_PRODUCTS_DIR/product-service/Dockerfile" "$BE_PROJECT_DIR"
+
+    # 7) Product Read Service
+    log_info "Product Read Service 이미지 빌드 중..."
+    docker build -t product-read-service:local -f "$BE_DOMAIN_PRODUCTS_DIR/product-read-service/Dockerfile" "$BE_PROJECT_DIR"
+
     log_info "Docker 이미지 빌드 완료"
 }
 
@@ -198,7 +207,7 @@ DOCKERFILE
 load_images() {
     log_step "Kind 클러스터에 이미지 로드"
 
-    local images=("keycloak-local:latest" "gateway-service:local" "user-command-service:local" "user-query-service:local" "email-service:local")
+    local images=("keycloak-local:latest" "gateway-service:local" "user-command-service:local" "user-query-service:local" "email-service:local" "product-service:local" "product-read-service:local")
 
     for img in "${images[@]}"; do
         log_info "로드 중: $img"
@@ -281,10 +290,11 @@ deploy_infra() {
 
     # Broker 인프라 (경량 모드 시 스킵)
     if [ "$LIGHT_MODE" = false ]; then
-        log_info "Broker 인프라 배포 (Kafka-Business, Redis-Business, PostgreSQL-Booking)..."
+        log_info "Broker 인프라 배포 (Kafka-Business, Redis-Business, PostgreSQL-Booking, PostgreSQL-Products)..."
         kubectl apply -f "$MANIFESTS_DIR/kafka-business.yaml"
         kubectl apply -f "$MANIFESTS_DIR/redis-business.yaml"
         kubectl apply -f "$MANIFESTS_DIR/postgres-booking.yaml"
+        kubectl apply -f "$MANIFESTS_DIR/postgres-products.yaml"
     else
         log_warn "경량 모드: Broker 인프라 스킵"
     fi
@@ -317,6 +327,8 @@ deploy_apps() {
     kubectl apply -f "$MANIFESTS_DIR/user-command-service.yaml"
     kubectl apply -f "$MANIFESTS_DIR/user-query-service.yaml"
     kubectl apply -f "$MANIFESTS_DIR/email-service.yaml"
+    kubectl apply -f "$MANIFESTS_DIR/product-service.yaml"
+    kubectl apply -f "$MANIFESTS_DIR/product-read-service.yaml"
 
     # 이미지 태그가 동일(:local)하므로 rollout restart로 새 이미지 반영
     log_info "앱 서비스 롤링 재시작..."
@@ -324,12 +336,16 @@ deploy_apps() {
     kubectl -n "$NAMESPACE" rollout restart deployment/user-command-service
     kubectl -n "$NAMESPACE" rollout restart deployment/user-query-service
     kubectl -n "$NAMESPACE" rollout restart deployment/email-service
+    kubectl -n "$NAMESPACE" rollout restart deployment/product-service
+    kubectl -n "$NAMESPACE" rollout restart deployment/product-read-service
 
     log_info "앱 서비스 Ready 대기 중..."
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=gateway-service --timeout=120s 2>/dev/null || true
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=user-command-service --timeout=120s 2>/dev/null || true
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=user-query-service --timeout=120s 2>/dev/null || true
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=email-service --timeout=120s 2>/dev/null || true
+    kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=product-service --timeout=120s 2>/dev/null || true
+    kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=product-read-service --timeout=120s 2>/dev/null || true
 
     log_info "앱 서비스 배포 완료"
 }
