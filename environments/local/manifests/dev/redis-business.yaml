@@ -22,7 +22,7 @@ spec:
         - --requirepass
         - $(REDIS_BUSINESS_PASSWORD)
         - --maxmemory
-        - 256mb
+        - 96mb
         - --maxmemory-policy
         - allkeys-lru
         ports:
@@ -43,7 +43,7 @@ spec:
             memory: "64Mi"
             cpu: "50m"
           limits:
-            memory: "256Mi"
+            memory: "128Mi"
             cpu: "200m"
         volumeMounts:
         - name: data

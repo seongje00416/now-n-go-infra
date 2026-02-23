@@ -47,6 +47,8 @@ spec:
           value: "0"
         - name: CLUSTER_ID
           value: "QnVzaW5lc3NCcm9rZXJJRA"
+        - name: KAFKA_LOG_CLEANER_DEDUPE_BUFFER_SIZE
+          value: "16777216"
         - name: KAFKA_HEAP_OPTS
           value: "-Xms128m -Xmx256m"
         readinessProbe:
@@ -57,10 +59,10 @@ spec:
           timeoutSeconds: 5
         resources:
           requests:
-            memory: "256Mi"
+            memory: "192Mi"
             cpu: "100m"
           limits:
-            memory: "512Mi"
+            memory: "384Mi"
             cpu: "500m"
         volumeMounts:
         - name: data

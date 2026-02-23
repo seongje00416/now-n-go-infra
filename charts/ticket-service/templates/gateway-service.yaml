@@ -99,6 +99,11 @@ spec:
             configMapKeyRef:
               name: app-config
               key: SOCIAL_CALLBACK_BASE_URL
+        - name: APP_FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: APP_FRONTEND_URL
         readinessProbe:
           httpGet:
             path: /actuator/health
@@ -110,7 +115,7 @@ spec:
             memory: "128Mi"
             cpu: "100m"
           limits:
-            memory: "384Mi"
+            memory: "320Mi"
             cpu: "300m"
 ---
 apiVersion: v1

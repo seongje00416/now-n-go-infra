@@ -4,9 +4,9 @@
 | :---: | :----: |
 | 컨테이너 | Docker |
 | 오케스트레이션 | Kubernetes |
-| CI | (미정) |
+| CI | Jenkins |
 | CD | ArgoCD |
-| Broker | (미정) |
+| Broker | Kafka |
 | IaC | Terraform |
 
 ### 로컬 개발 환경
@@ -17,4 +17,4 @@
 #### EKS
 - 배포 환경에서의 클러스터 구축에 사용
 
-### ~~통합 테스트 환경(미정)~~
+### ~~통합 테스트 환경~~

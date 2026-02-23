@@ -1,0 +1,40 @@
+replicaCount: 1
+
+image:
+  repository: kafka-business        # 로컬 빌드한 이미지 이름
+  tag: "3.9.1"
+  pullPolicy: IfNotPresent    # 로컬 이미지 사용 시 Never 또는 IfNotPresent
+
+kafka:
+  clusterIdSecret: kafka-cluster-id   # kubectl create secret generic kafka-cluster-id --from-literal=KAFKA_CLUSTER_ID=$(kafka-storage.sh random-uuid)
+  logDirs: /var/kafka/logs
+
+  # server.properties 핵심 설정
+  config:
+    processRoles: broker,controller
+    controllerListenerNames: CONTROLLER
+    interBrokerListenerName: PLAINTEXT
+    listeners: PLAINTEXT://:9092,CONTROLLER://:9093
+    listenerSecurityProtocolMap: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+    numPartitions: 1
+    defaultReplicationFactor: 1
+    minInsyncReplicas: 1
+    logRetentionHours: 168
+    autoCreateTopicsEnable: "true"
+    groupInitialRebalanceDelayMs: 0
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: "1"
+    memory: 2Gi
+
+persistence:
+  enabled: true
+  storageClass: "standard"    # Kind 로컬 클러스터 기본 StorageClass
+  size: 5Gi
+
+service:
+  port: 9092

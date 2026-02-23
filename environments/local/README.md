@@ -11,7 +11,7 @@ k8s는 기본적으로 클러스터가 구축되어 있어야 작동함을 확�
 - Docker를 통해 k8s 환경을 구축할 수 있도록 해주는 도구
 - 로컬에서 Docker 사용을 위해 Docker Desktop 활용( 설치 필수 )
 
-###### Windows WSL 환경
+###### Windows WSL 환경( Linux 환경 )
 ```bash
 # WSL 터미널에서 실행
 
@@ -39,32 +39,6 @@ kubectl version --client
 > **WSL Docker Desktop 설정**: 별도 설정 없이 Windows에서 Docker Desktop GUI를 실행하면  
 > WSL 내 `docker` 명령어가 자동으로 Docker Desktop에 연결됩니다.  
 > 자세한 내용은 [DOCKER_DESKTOP_GUIDE.md](DOCKER_DESKTOP_GUIDE.md)를 참고하세요.
-
-###### Windows 환경
-```
-# 관리자 권한으로 PowerShell 실행
-
-# 1. Chocolatey 설치 (패키지 매니저, 없다면)
-$ Set-ExecutionPolicy Bypass -Scope Process -Force
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-
-# 2. Kind 설치
-$ choco install kind -y
-
-# 3. Terraform 설치
-$ choco install terraform -y
-
-# 4. kubectl 설치
-$ choco install kubernetes-cli -y
-
-# 설치 확인
-$ kind --version
-$ terraform --version
-$ kubectl version --client
-
-# PowerShell 재시작 (PATH 업데이트)
-```
 
 ###### Windows 환경 - 패키지 제거 (WSL로 전환 시)
 WSL 환경을 사용하기로 결정한 경우, Windows 네이티브에 설치했던 패키지를 제거합니다.

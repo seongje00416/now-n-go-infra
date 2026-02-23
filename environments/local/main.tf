@@ -19,7 +19,7 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.11"
+      version = "~> 2.12.1"
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
@@ -49,6 +49,10 @@ resource "kind_cluster" "default" {
     # k8s 노드 설정
     node {
       role = "control-plane"                        # 해당 노드의 역할 "control-plane" vs. "worker"
+
+      labels = {
+        "ingress-ready" = "true"
+      }
 
       # 호스트 ↔ 컨테이너 포트 매핑 (port-forward 없이 localhost로 접근 가능)
       extra_port_mappings {
@@ -182,6 +186,59 @@ resource "kubernetes_namespace" "namespaces" {
       managed-by  = "terraform"
     }
   }
+}
+
+# NGINX Ingress Controller 설치
+#  helm을 사용해 Ngin Ingress Controller 설치
+#  helm: k8s에서 패키지 매니저 역할을 하는 도구, npm과 유사한 역할
+#   helm_release: helm을 사용해 패키지 설치를 정의하는 리소스 타입
+resource "helm_release" "nginx_ingress" {
+  name       = "ingress-nginx"                                      # 릴리즈 이름 설정
+  repository = "https://kubernetes.github.io/ingress-nginx"         # helm_release를 통해 Nginx Ingress Controller 설치를 위한 저장소
+  chart      = "ingress-nginx"                                      # 설치할 차트 이름
+  namespace  = "ingress-nginx"                                      # 설치할 네임스페이스
+  version    = "4.8.3"                                              # 설치할 차트 버전
+  
+  create_namespace = true                                           # 위에서 정의한 네임스페이스가 없으면 만들도록 설정
+  
+  # Helm Chart의 values.yaml 파일에 들어간 설정을 수정하기 위한 블록
+  #  set 블록 하나가 하나의 정보 업데이트를 의미
+  set {
+    name  = "controller.service.type"           # 변경하고자 하는 설정 필드 이름
+    value = "NodePort"                          # 변경하고자 하는 값
+  }
+  
+  set {
+    name  = "controller.hostPort.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "controller.nodeSelector.ingress-ready"
+    value = "true"
+    type = "string"
+  }
+
+  set {
+    name  = "controller.tolerations[0].key"
+    value = "node-role.kubernetes.io/control-plane"
+  }
+
+  set {
+    name  = "controller.tolerations[0].effect"
+    value = "NoSchedule"
+  }
+
+  set {
+    name  = "controller.tolerations[0].operator"
+    value = "Exists"
+  }
+
+  # 로컬에서 해당 인프라를 구동할 것이기 때문에 NodePort 타입으로 설정하고 호스트 포트를 그대로 사용하도록 설정
+  
+  # 의존성 설정
+  #  이 모든 작업은 kind_cluster.default가 완성되고 그 안에서 이루어져야 하기 때문에 해당 작업에 대한 의존성을 등록
+  depends_on = [kind_cluster.default]
 }
 
 # MetalLB 설정
