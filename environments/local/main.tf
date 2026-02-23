@@ -50,6 +50,10 @@ resource "kind_cluster" "default" {
     node {
       role = "control-plane"                        # 해당 노드의 역할 "control-plane" vs. "worker"
 
+      labels = {
+        "ingress-ready" = "true"
+      }
+
       # 호스트 ↔ 컨테이너 포트 매핑 (port-forward 없이 localhost로 접근 가능)
       extra_port_mappings {
         container_port = 30070                      # NodePort로 노출할 ArgoCD 포트
