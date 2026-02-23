@@ -2,7 +2,7 @@
 registry: localhost:5000
 
 # BE 서비스별 이미지 태그 (Jenkins BE 파이프라인에서 변경된 서비스만 업데이트)
-gatewayImageTag: "20"
+gatewayImageTag: "21"
 userCommandImageTag: "9"
 userQueryImageTag: "9"
 emailImageTag: "9"
