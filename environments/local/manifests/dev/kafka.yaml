@@ -50,7 +50,7 @@ spec:
         - name: KAFKA_LOG_CLEANER_DEDUPE_BUFFER_SIZE
           value: "16777216"
         - name: KAFKA_HEAP_OPTS
-          value: "-Xms128m -Xmx256m"
+          value: "-Xms384m -Xmx512m"
         readinessProbe:
           tcpSocket:
             port: 9092

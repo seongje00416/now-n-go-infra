@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+      - name: product-service
+        image: product-service:local
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8089
+        env:
+        - name: JAVA_OPTS
+          value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
+        - name: SPRING_PROFILES_ACTIVE
+          value: "k8s"
+        - name: PRODUCT_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: PRODUCT_DB_HOST
+        - name: PRODUCT_DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: PRODUCT_DB_PORT
+        - name: PRODUCT_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: PRODUCT_DB_USER
+        - name: PRODUCT_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: PRODUCT_DB_PASSWORD
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_BUSINESS_BOOTSTRAP_SERVERS
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: REDIS_BUSINESS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: REDIS_BUSINESS_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: REDIS_BUSINESS_PASSWORD
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8089
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "384Mi"
+            cpu: "300m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: dev
+spec:
+  selector:
+    app: product-service
+  ports:
+  - port: 8089
+    targetPort: 8089
