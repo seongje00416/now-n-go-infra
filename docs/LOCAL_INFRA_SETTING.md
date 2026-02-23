@@ -1,0 +1,213 @@
+# 로컬 환경 인프라 구축
+- 로컬 환경에서 개발 후 다른 서비스와의 연결을 테스트할 수 있는 로컬 테스트 환경을 위한 인프라입니다.
+- 로컬 인프라에 기본으로 구축되는 서비스는 다음과 같습니다.
+### 1. Kubernetes
+- kind를 사용해 로컬 클러스터를 구축합니다,
+- MetalLB를 사용해 로컬 환경에서 로드밸런서를 구현합니다.
+- 서비스 배포를 위해 Helm Chart를 사용합니다.
+- 라우팅을 위해 Nginx Ingress Controller를 사용합니다.
+- PV, PVC는 로컬 메모리를 사용합니다.
+### 2. ArgoCD
+- 개발이 완료된 서비스는 ArgoCD를 통해 배포합니다.
+- 서비스 배포 자동화 및 이미 배포 완료된 서비스들을 동기화하기 위해 사용합니다.
+### 3. Redis
+- 캐시 등을 위해 Redis를 사용합니다.
+### 4. Kafka
+- 데이터 동기화 및 이벤트 브로커 사용을 위해 Kafka를 사용합니다.
+# 구축 방법
+- 로컬 인프라는 공용 인프라에 변동이 없는 한 최초 1회만 만들어 두면 데이터가 유지됩니다.
+- 단, 클러스터를 강제로 삭제하는 등의 작업을 수행하게 되면 데이터가 소실됩니다.
+- 전체적인 구축 순서는 다음과 같습니다.
+```
+로컬 작업을 위한 라이브러리 설치( kind, helm, kubectl, terraform ) -> Terraform을 통한 클러스터 기초 구축
+-> Kafka 서비스 배포 -> ArgoCD를 통한 클러스터 동기화
+```
+- Redis, ArgoCD 등 대부분의 서비스는 최초 Terraform을 통해 함께 수행되나 Kafka의 경우 별도 배포 스크립트 실행이 필요합니다.
+### 0. 기본 파일 준비
+- 대부분의 파일은 Git에서 pull 하는 것으로 가져오지만 중요 정보가 담긴 파일은 Git에 올릴 수 없으므로 따로 만들어야 합니다.
+- 만들어야 하는 파일 목록은 다음과 같습니다.
+    1) /environment/local/terraform.tfvars
+###### terraform.tfvars
+- 본인의 환경에 맞는 값으로 바꿔서 저장해주세요.
+> cluster_name = "local-dev"
+> namespaces   = ["dev", "monitoring"]      
+> github_username = "Github 사용자명( 이메일X )"
+> github_token    = "Github PAT 값. ghp_로 시작하는 문자열"
+> redis_password = "mypassword123"
+- cluster_name과 namespace는 그대로 사용하면 됩니다.
+- github 관련 값은 본인의 Github 계정에 맞게 사용해주세요. Token은 PAT 값입니다.
+- redis_password는 로컬 Redis에서 사용할 비밀번호 입니다. 자유롭게 지정해주셔도 됩니다. ( 추후 redis 모듈의 application.yml에 작성해주어야 하니 기억해둡시다. )
+
+### 1. 로컬 작업을 위한 라이브러리 설치
+```
+# Linux 환경 ( WSL )
+
+# 1. Kind 설치
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+
+# 2. Terraform 설치
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y terraform
+
+# 3. kubectl 설치
+curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/kubectl
+
+# 4. Helm 설치
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# 5. 설치 확인
+kind --version
+terraform --version
+kubectl version --client
+helm version
+```
+```
+# MacOS 환경
+
+# Homebrew 설치 (없다면)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 1. Kind 설치
+brew install kind
+
+# 2. Terraform 설치
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+
+# 3. kubectl 설치
+brew install kubectl
+
+# 4. Helm 설치
+brew install helm
+
+# 설치 확인
+kind --version
+terraform --version
+kubectl version --client
+helm version
+```
+- kind: 로컬 클러스터 구축을 위해 필요한 패키지
+- terraform: IaC를 위한 패키지
+- kubectl: K8S 명령어 사용을 위한 패키지
+- helm: Helm Chart를 사용해 배포를 하기 위한 패키지
+
+### 2. Terraform을 통한 인프라 구축
+##### 로컬 클러스터 구축을 위한 Terraform 파일이 정의되어 있는 경로로 이동
+> /mzc-final-project-infra/environments/local
+- pwd 명령어 입력해 해당 디렉토리가 나오는지 확인
+##### Terraform 실행
+```
+# Terraform 초기화
+terraform init
+
+# Terraform 파일이 정상적인지 확인
+terraform plan
+
+# Terraform 파일을 통한 인프라 구축
+terraform apply
+```
+- 구축 과정에서 에러가 난다면 어떤 에러인지 확인하기
+###### 현재 확인된 에러
+<table>
+    <thead>
+        <tr>
+            <td> 에러명 </td>
+            <td> 해결 방법 </td>
+        </tr>
+    </thead>
+    <tr>
+        <td> 없음 </td>
+        <td></td>
+    </tr>
+</table>
+
+##### 구축 확인
+```
+# kind 클러스터 구축 확인
+kind get clusters
+```
+- local-dev 라는 이름의 클러스터가 생성되어 있으면 완료
+```
+# 현재 실행 중인 노드 확인
+kubectl get nodes
+```
+- control-plane 1개와 worker 2개가 생성되어 있으면 완료
+- 세 개의 노드의 STATUS가 모두 Ready인지 확인
+```
+# 현재 실행 중인 파드 확인
+kubectl get pods -n redis
+kubectl get pods -n argocd
+```
+- redis의 경우 1개의 Pod가 Running 상태이면 완료
+- argocd의 경우 모든 Pod가 Running 상태이면 완료
+
+##### ArgoCD 접속 확인
+- 추후 로컬 배포 및 ArgoCD 동기화를 진행하면 각 Pod들이 정상적으로 ArgoCD에서 관리되고 있는지 확인이 필요한 경우가 있다.
+```
+# ArgoCD 접속 비밀번호 확인 ( username은 admin )
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+# ArgoCD 접속
+# 포트포워딩 설정
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# NodePort 확인 -> http://localhost:확인된 노드 포트
+kubectl get svc -n argocd argocd-server
+```
+- 위 작업이 완료되면 로컬의 브라우저에서 localhost:8080을 통해 ArgoCD UI로 접근 가능
+
+### 3. Kafka 서비스 배포
+- Kafka의 경우, 이미지를 다운로드할 수 있는 레포지토리의 제한과 많은 설정 값으로 인해 따로 배포가 필요
+##### 아래 경로로 이동
+> /mzc-final-project-infra/service/kafka
+- Git의 Infra 레포지토리에 service 경로가 존재
+- pwd 명령어를 입력했을 때 이 경로가 나오도록 설정
+##### 스크립트 실행
+```
+./deploy-kafka.sh
+```
+*주의: deploy-kafka.sh를 실행해야 합니다. deploy-entrypoint.sh를 실행하면 안됩니다.*
+- 해당 스크립트 파일은 Dockerfile 빌드부터 로컬 클러스터에 배포까지 진행합니다.
+- 로컬 클러스터가 구축되어 있다는 전제하에 만들어진 스크립트 파일입니다. 반드시 선행 작업을 완료하고 진행해주세요.
+##### 배포 확인
+```
+kubectl get pods -n kafka
+```
+- 명령어를 실행했을 때 kafka Pod가 1개 실행 중이고 STATUS가 Running면 완료
+##### Trouble-Shooting
+- 해당 스크립트 파일을 실행하다 에러가 나거나 실수했을 경우 아래 명령어를 통해 빌드 및 배포를 초기화하고 진행합니다.
+```
+helm uninstall kafka -n kafka
+```
+### 4. ArgoCD를 통한 클러스터 동기화
+(작업중)
+
+## 배포 환경 상세 설명
+### 클러스터
+<table>
+    <thead>
+        <tr>
+            <td> 대상 </td>
+            <td> 값 </td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td> 클러스터 이름 </td>
+            <td> local-dev </td>
+        </tr>
+        <tr>
+            <td> 네임스페이스 </td>
+            <td> dev, argocd, kafka, redis </td>
+        </tr>
+        <tr>
+            <td> 노드 수 </td>
+            <td> Control-Plane 1개, Worker Node 2개 </td>
+        </tr>
+    </tbody>
+</table>
