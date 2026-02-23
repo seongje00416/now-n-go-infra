@@ -6,7 +6,7 @@ gatewayImageTag: "21"
 userCommandImageTag: "9"
 userQueryImageTag: "9"
 emailImageTag: "23"
-keycloakImageTag: "19"
+keycloakImageTag: "24"
 
 # FE 이미지 태그 (Jenkins FE 파이프라인에서 자동 업데이트)
 feImageTag: "15"
