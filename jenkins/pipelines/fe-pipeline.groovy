@@ -56,7 +56,6 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Forwarded-Host \$http_host;
-        proxy_set_header X-Forwarded-Port \$server_port;
     }
 
     # OAuth2 로그인/콜백 → gateway-service
@@ -67,7 +66,6 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Forwarded-Host \$http_host;
-        proxy_set_header X-Forwarded-Port \$server_port;
     }
 
     location /login/oauth2/ {
@@ -77,7 +75,6 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Forwarded-Host \$http_host;
-        proxy_set_header X-Forwarded-Port \$server_port;
     }
 
     # 로그아웃 → gateway-service
@@ -88,7 +85,6 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Forwarded-Host \$http_host;
-        proxy_set_header X-Forwarded-Port \$server_port;
     }
 
     # Actuator → gateway-service
