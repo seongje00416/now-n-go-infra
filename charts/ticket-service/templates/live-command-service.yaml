@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: live-command-service
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: live-command-service
+  template:
+    metadata:
+      labels:
+        app: live-command-service
+    spec:
+      containers:
+      - name: live-command-service
+        image: {{ .Values.registry }}/live-command-service:{{ .Values.liveCommandImageTag }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8100
+        env:
+        - name: JAVA_OPTS
+          value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
+        - name: SPRING_PROFILES_ACTIVE
+          value: "k8s"
+        - name: BOOKING_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: BOOKING_DB_HOST
+        - name: BOOKING_DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: BOOKING_DB_PORT
+        - name: BOOKING_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: BOOKING_DB_USER
+        - name: BOOKING_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: BOOKING_DB_PASSWORD
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_BUSINESS_BOOTSTRAP_SERVERS
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: REDIS_BUSINESS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: REDIS_BUSINESS_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: REDIS_BUSINESS_PASSWORD
+        - name: INTERNAL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: INTERNAL_API_KEY
+        - name: S3_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: S3_ENDPOINT
+        - name: S3_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: S3_REGION
+        - name: S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: S3_ACCESS_KEY
+        - name: S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: S3_SECRET_KEY
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8100
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "384Mi"
+            cpu: "300m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: live-command-service
+  namespace: dev
+spec:
+  selector:
+    app: live-command-service
+  ports:
+  - port: 8100
+    targetPort: 8100

@@ -14,7 +14,7 @@ pipeline {
         stage('Checkout FE') {
             steps {
                 dir('fe') {
-                    git branch: 'develop',
+                    git branch: 'feature/hsj/19-live-commerce-test',
                         url: "${FE_REPO_URL}",
                         credentialsId: 'github-pat'
                 }
@@ -60,7 +60,7 @@ EOF
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                     dir('infra') {
-                        git branch: 'develop',
+                        git branch: 'local/hsj/1-individual-branch',
                             url: "${INFRA_REPO_URL}",
                             credentialsId: 'github-pat'
 
@@ -75,7 +75,7 @@ EOF
                             git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/MZC-Final-Project/mzc-final-project-infra.git
                             git add charts/ticket-service/values.yaml
                             git commit -m "ci: FE 이미지 태그 업데이트 → ${IMAGE_TAG}" || echo 'No changes to commit'
-                            git push origin develop
+                            git push origin local/hsj/1-individual-branch
                         """
                     }
                 }

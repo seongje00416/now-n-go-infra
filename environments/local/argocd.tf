@@ -61,7 +61,7 @@ resource "kubectl_manifest" "argocd_application_ci" {
       project: default
       source:
         repoURL: https://github.com/MZC-Final-Project/mzc-final-project-infra
-        targetRevision: develop
+        targetRevision: local/hsj/1-individual-branch
         path: charts/ticket-service
         helm:
           valueFiles:
