@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kafka.name" . }}-config
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
+data:
+  server.properties: |
+    # KRaft 모드
+    process.roles={{ .Values.kafka.config.processRoles }}
+    # node.id는 StatefulSet init container에서 Pod 순번으로 주입됨
+    node.id=${KAFKA_NODE_ID}
+    controller.quorum.voters={{ include "kafka.quorumVoters" . }}
+
+    # 리스너
+    listeners={{ .Values.kafka.config.listeners }}
+    # advertised.listeners는 각 Pod의 DNS로 init container에서 주입됨
+    advertised.listeners=PLAINTEXT://${KAFKA_POD_FQDN}:9092
+    listener.security.protocol.map={{ .Values.kafka.config.listenerSecurityProtocolMap }}
+    controller.listener.names={{ .Values.kafka.config.controllerListenerNames }}
+    inter.broker.listener.name={{ .Values.kafka.config.interBrokerListenerName }}
+
+    # 스토리지
+    log.dirs={{ .Values.kafka.logDirs }}
+
+    # 토픽 기본값
+    num.partitions={{ .Values.kafka.config.numPartitions }}
+    default.replication.factor={{ .Values.kafka.config.defaultReplicationFactor }}
+    min.insync.replicas={{ .Values.kafka.config.minInsyncReplicas }}
+
+    # 로그 보존
+    log.retention.hours={{ .Values.kafka.config.logRetentionHours }}
+
+    # 기타
+    auto.create.topics.enable={{ .Values.kafka.config.autoCreateTopicsEnable }}
+    group.initial.rebalance.delay.ms={{ .Values.kafka.config.groupInitialRebalanceDelayMs }}
