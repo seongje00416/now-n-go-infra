@@ -48,7 +48,7 @@ spec:
         - name: CLUSTER_ID
           value: "QnVzaW5lc3NCcm9rZXJJRA"
         - name: KAFKA_HEAP_OPTS
-          value: "-Xms128m -Xmx256m"
+          value: "-Xms96m -Xmx192m"
         readinessProbe:
           tcpSocket:
             port: 9092
@@ -57,10 +57,10 @@ spec:
           timeoutSeconds: 5
         resources:
           requests:
-            memory: "256Mi"
+            memory: "192Mi"
             cpu: "100m"
           limits:
-            memory: "512Mi"
+            memory: "384Mi"
             cpu: "500m"
         volumeMounts:
         - name: data
