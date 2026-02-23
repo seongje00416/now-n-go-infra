@@ -13,6 +13,8 @@
 #   ./deploy-local.sh --resume           # 일시 중지된 컨테이너 다시 시작
 #   ./deploy-local.sh --status           # 현재 상태 확인
 #
+# MailHog 접근: http://localhost:8025 (Kind 포트 매핑으로 자동 노출)
+#
 # 경량 모드 (--light): RAM 16GB 이하 Mac 권장
 #   - Broker 인프라 스킵 (kafka-business, redis-business, postgres-booking)
 #   - 리소스 설정은 매니페스트에 직접 반영됨 (별도 패치 없음)
@@ -62,7 +64,6 @@ parse_args() {
             --pause)     MODE="pause"; shift ;;
             --resume)    MODE="resume"; shift ;;
             --status)    MODE="status"; shift ;;
-            --mailhog)   MODE="mailhog"; shift ;;
             --help|-h)   usage; exit 0 ;;
             *) log_error "알 수 없는 옵션: $1"; usage; exit 1 ;;
         esac
@@ -81,7 +82,6 @@ usage() {
     echo "  --pause        모든 배포 컨테이너 일시 중지 (replicas → 0)"
     echo "  --resume       일시 중지된 컨테이너 다시 시작 (replicas → 1)"
     echo "  --status       현재 배포 상태 확인"
-    echo "  --mailhog      메일호그 웹 UI 포트 포워딩 (localhost:30025)"
     echo ""
     echo "조합 예시:"
     echo "  $0 --light              경량 전체 배포"
@@ -406,27 +406,6 @@ resume_deployments() {
     echo ""
 }
 
-# ── 메일호그 포트 포워딩 ─────────────────────────────────────────────────────
-start_mailhog_port_forward() {
-    log_step "메일호그 포트 포워딩"
-
-    # 메일호그가 배포되어 있는지 확인
-    if ! kubectl -n "$NAMESPACE" get svc mailhog >/dev/null 2>&1; then
-        log_error "메일호그가 배포되어 있지 않습니다. 먼저 인프라를 배포하세요:"
-        echo "  $0 --infra-only"
-        exit 1
-    fi
-
-    log_info "메일호그 웹 UI 포트 포워딩 시작..."
-    log_info "접속 URL: http://localhost:30025"
-    echo ""
-    echo -e "  ${YELLOW}포트 포워딩을 중지하려면 Ctrl+C를 누르세요.${NC}"
-    echo ""
-
-    # 포트 포워딩 실행 (이 함수는 블로킹됨)
-    kubectl port-forward -n "$NAMESPACE" svc/mailhog 30025:8025
-}
-
 # ── 전체 정리 ────────────────────────────────────────────────────────────────
 cleanup() {
     log_step "로컬 배포 리소스 정리"
@@ -514,10 +493,6 @@ main() {
         status)
             kind export kubeconfig --name "$CLUSTER_NAME" 2>/dev/null
             print_status
-            ;;
-        mailhog)
-            kind export kubeconfig --name "$CLUSTER_NAME" 2>/dev/null
-            start_mailhog_port_forward
             ;;
         infra-only)
             check_prerequisites
