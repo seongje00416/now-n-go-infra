@@ -99,6 +99,11 @@ spec:
             configMapKeyRef:
               name: app-config
               key: SOCIAL_CALLBACK_BASE_URL
+        - name: APP_FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: APP_FRONTEND_URL
         readinessProbe:
           httpGet:
             path: /actuator/health

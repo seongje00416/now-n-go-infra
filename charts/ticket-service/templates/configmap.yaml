@@ -42,6 +42,9 @@ data:
   SOCIAL_LOGIN_ERROR_URL: "http://localhost:3000/login"
   SOCIAL_CALLBACK_BASE_URL: "http://localhost:3000"
 
+  # Frontend URL
+  APP_FRONTEND_URL: "http://localhost:3000"
+
   # Live 서비스
   LIVE_QUERY_SERVICE_URL: "http://live-query-service:8101"
 
