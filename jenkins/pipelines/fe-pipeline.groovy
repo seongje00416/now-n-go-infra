@@ -1,5 +1,5 @@
 // FE 서비스 CI 파이프라인
-// develop 브랜치 polling → npm build → Nginx Docker 이미지 → Registry Push → 매니페스트 업데이트
+// feature 브랜치 polling → npm build → Nginx Docker 이미지 → Registry Push → 매니페스트 업데이트
 pipeline {
     agent any
 
