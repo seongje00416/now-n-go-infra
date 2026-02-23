@@ -9,7 +9,7 @@ emailImageTag: "9"
 keycloakImageTag: "9"
 
 # FE 이미지 태그 (Jenkins FE 파이프라인에서 자동 업데이트)
-feImageTag: "6"
+feImageTag: "7"
 
 # Live 서비스 이미지 태그 (Jenkins BE 파이프라인에서 자동 업데이트)
 liveCommandImageTag: "14"
