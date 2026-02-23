@@ -38,9 +38,9 @@ data:
   BOOKING_DB_PORT: "5432"
 
   # Social Login
-  SOCIAL_LOGIN_SUCCESS_URL: "https://localhost:3000/dashboard"
-  SOCIAL_LOGIN_ERROR_URL: "https://localhost:3000/login"
-  SOCIAL_CALLBACK_BASE_URL: "http://localhost:8443"
+  SOCIAL_LOGIN_SUCCESS_URL: "http://localhost:3000/dashboard"
+  SOCIAL_LOGIN_ERROR_URL: "http://localhost:3000/login"
+  SOCIAL_CALLBACK_BASE_URL: "http://localhost:3000"
 
   # Live 서비스
   LIVE_QUERY_SERVICE_URL: "http://live-query-service:8101"
