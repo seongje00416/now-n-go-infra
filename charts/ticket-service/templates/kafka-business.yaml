@@ -47,6 +47,8 @@ spec:
           value: "0"
         - name: CLUSTER_ID
           value: "QnVzaW5lc3NCcm9rZXJJRA"
+        - name: KAFKA_LOG_CLEANER_DEDUPE_BUFFER_SIZE
+          value: "16777216"
         - name: KAFKA_HEAP_OPTS
           value: "-Xms128m -Xmx256m"
         readinessProbe:
