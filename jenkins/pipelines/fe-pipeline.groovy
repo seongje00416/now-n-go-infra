@@ -40,10 +40,74 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 dir('fe') {
-                    // Nginx 기반 정적 서빙 이미지
+                    // Nginx 기반 정적 서빙 + API 리버스 프록시 이미지
                     sh """
+                        cat > nginx.conf <<'NGINX'
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # API 요청 → gateway-service 프록시
+    location /api/ {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    # OAuth2 로그인/콜백 → gateway-service
+    location /oauth2/ {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /login/oauth2/ {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    # 로그아웃 → gateway-service
+    location /logout {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    # Actuator → gateway-service
+    location /actuator/ {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$host;
+    }
+
+    # WebSocket(채팅) → chat-service
+    location /ws {
+        proxy_pass http://chat-service:8096;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+    }
+
+    # SPA 라우팅 — 정적 파일 없으면 index.html
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+}
+NGINX
                         cat > Dockerfile.ci <<'EOF'
 FROM nginx:alpine
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY dist/ /usr/share/nginx/html/
 EXPOSE 80
 EOF
