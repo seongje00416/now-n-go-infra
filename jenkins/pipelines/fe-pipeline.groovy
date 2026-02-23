@@ -51,42 +51,50 @@ server {
     # API 요청 → gateway-service 프록시
     location /api/ {
         proxy_pass http://gateway-service:8080;
-        proxy_set_header Host \$host;
+        proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+        proxy_set_header X-Forwarded-Port \$server_port;
     }
 
     # OAuth2 로그인/콜백 → gateway-service
     location /oauth2/ {
         proxy_pass http://gateway-service:8080;
-        proxy_set_header Host \$host;
+        proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+        proxy_set_header X-Forwarded-Port \$server_port;
     }
 
     location /login/oauth2/ {
         proxy_pass http://gateway-service:8080;
-        proxy_set_header Host \$host;
+        proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+        proxy_set_header X-Forwarded-Port \$server_port;
     }
 
     # 로그아웃 → gateway-service
     location /logout {
         proxy_pass http://gateway-service:8080;
-        proxy_set_header Host \$host;
+        proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+        proxy_set_header X-Forwarded-Port \$server_port;
     }
 
     # Actuator → gateway-service
     location /actuator/ {
         proxy_pass http://gateway-service:8080;
-        proxy_set_header Host \$host;
+        proxy_set_header Host \$http_host;
     }
 
     # WebSocket(채팅) → chat-service
@@ -95,7 +103,7 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
+        proxy_set_header Host \$http_host;
     }
 
     # SPA 라우팅 — 정적 파일 없으면 index.html
