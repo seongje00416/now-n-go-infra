@@ -71,6 +71,30 @@ pipeline {
                         }
                     }
                 }
+                stage('user-write-service') {
+                    steps {
+                        dir('be') {
+                            sh """
+                                docker build \
+                                    -t ${REGISTRY}/user-write-service:${IMAGE_TAG} \
+                                    -f data/auth/user-write-service/Dockerfile .
+                                docker push ${REGISTRY}/user-write-service:${IMAGE_TAG}
+                            """
+                        }
+                    }
+                }
+                stage('user-read-service') {
+                    steps {
+                        dir('be') {
+                            sh """
+                                docker build \
+                                    -t ${REGISTRY}/user-read-service:${IMAGE_TAG} \
+                                    -f data/auth/user-read-service/Dockerfile .
+                                docker push ${REGISTRY}/user-read-service:${IMAGE_TAG}
+                            """
+                        }
+                    }
+                }
                 stage('keycloak') {
                     steps {
                         dir('be/common/auth/keycloak') {
@@ -106,7 +130,13 @@ DEOF
 
                         sh """
                             cd charts/ticket-service
-                            sed -i 's|beImageTag:.*|beImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|gatewayImageTag:.*|gatewayImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|userCommandImageTag:.*|userCommandImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|userQueryImageTag:.*|userQueryImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|userWriteImageTag:.*|userWriteImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|userReadImageTag:.*|userReadImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|emailImageTag:.*|emailImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|keycloakImageTag:.*|keycloakImageTag: "${IMAGE_TAG}"|' values.yaml
                         """
 
                         sh """

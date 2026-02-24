@@ -5,6 +5,8 @@ registry: localhost:5000
 gatewayImageTag: "21"
 userCommandImageTag: "9"
 userQueryImageTag: "9"
+userWriteImageTag: "1"
+userReadImageTag: "1"
 emailImageTag: "23"
 keycloakImageTag: "25"
 

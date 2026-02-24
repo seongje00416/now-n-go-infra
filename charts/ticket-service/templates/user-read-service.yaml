@@ -1,54 +1,49 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-command-service
+  name: user-read-service
   namespace: dev
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-command-service
+      app: user-read-service
   template:
     metadata:
       labels:
-        app: user-command-service
+        app: user-read-service
     spec:
       containers:
-      - name: user-command-service
-        image: user-command-service:local
-        imagePullPolicy: Never
+      - name: user-read-service
+        image: {{ .Values.registry }}/user-read-service:{{ .Values.userReadImageTag }}
+        imagePullPolicy: Always
         ports:
-        - containerPort: 8086
+        - containerPort: 8189
         env:
         - name: JAVA_OPTS
           value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
         - name: SPRING_PROFILES_ACTIVE
           value: "k8s"
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: REDIS_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: REDIS_PASSWORD
         - name: KAFKA_BOOTSTRAP_SERVERS
           valueFrom:
             configMapKeyRef:
               name: app-config
               key: KAFKA_BOOTSTRAP_SERVERS
-        - name: KEYCLOAK_INTERNAL_URL
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: KEYCLOAK_INTERNAL_URL
-        - name: KEYCLOAK_REALM
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: KEYCLOAK_REALM
-        - name: KEYCLOAK_CLIENT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: KEYCLOAK_CLIENT_ID
-        - name: KEYCLOAK_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: KEYCLOAK_CLIENT_SECRET
         - name: INTERNAL_API_KEY
           valueFrom:
             secretKeyRef:
@@ -89,15 +84,10 @@ spec:
             secretKeyRef:
               name: app-secret
               key: S3_SECRET_KEY
-        - name: S3_TRUST_ALL_CERTS
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: S3_TRUST_ALL_CERTS
         readinessProbe:
           httpGet:
             path: /actuator/health
-            port: 8086
+            port: 8189
           initialDelaySeconds: 30
           periodSeconds: 10
         resources:
@@ -111,11 +101,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-command-service
+  name: user-read-service
   namespace: dev
 spec:
   selector:
-    app: user-command-service
+    app: user-read-service
   ports:
-  - port: 8086
-    targetPort: 8086
+  - port: 8189
+    targetPort: 8189

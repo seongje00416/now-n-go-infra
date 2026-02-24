@@ -24,26 +24,6 @@ spec:
           value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
         - name: SPRING_PROFILES_ACTIVE
           value: "k8s"
-        - name: USER_DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: USER_DB_HOST
-        - name: USER_DB_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: USER_DB_PORT
-        - name: USER_DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: USER_DB_USER
-        - name: USER_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: USER_DB_PASSWORD
         - name: KAFKA_BOOTSTRAP_SERVERS
           valueFrom:
             configMapKeyRef:
@@ -74,16 +54,11 @@ spec:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
-        - name: ENCRYPTION_AES_KEY
+        - name: USER_WRITE_SERVICE_URL
           valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: ENCRYPTION_AES_KEY
-        - name: ENCRYPTION_HMAC_KEY
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: ENCRYPTION_HMAC_KEY
+            configMapKeyRef:
+              name: app-config
+              key: USER_WRITE_SERVICE_URL
         - name: S3_ENDPOINT
           valueFrom:
             configMapKeyRef:
