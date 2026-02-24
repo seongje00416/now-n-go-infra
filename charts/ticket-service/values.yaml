@@ -2,11 +2,11 @@
 registry: localhost:5000
 
 # BE 서비스별 이미지 태그 (Jenkins BE 파이프라인에서 변경된 서비스만 업데이트)
-gatewayImageTag: "11"
-userCommandImageTag: "11"
-userQueryImageTag: "11"
-emailImageTag: "11"
-keycloakImageTag: "11"
+gatewayImageTag: "12"
+userCommandImageTag: "12"
+userQueryImageTag: "12"
+emailImageTag: "12"
+keycloakImageTag: "12"
 
 # FE 이미지 태그 (Jenkins FE 파이프라인에서 자동 업데이트)
 feImageTag: "12"
