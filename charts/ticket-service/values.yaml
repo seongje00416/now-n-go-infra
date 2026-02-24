@@ -9,4 +9,4 @@ emailImageTag: "6"
 keycloakImageTag: "6"
 
 # FE 이미지 태그 (Jenkins FE 파이프라인에서 자동 업데이트)
-feImageTag: "14"
+feImageTag: "15"
