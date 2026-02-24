@@ -24,63 +24,16 @@ spec:
           value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
         - name: SPRING_PROFILES_ACTIVE
           value: "k8s"
-        - name: REDIS_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: REDIS_HOST
-        - name: REDIS_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: REDIS_PORT
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: REDIS_PASSWORD
-        - name: KAFKA_BOOTSTRAP_SERVERS
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: KAFKA_BOOTSTRAP_SERVERS
         - name: INTERNAL_API_KEY
           valueFrom:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
-        - name: COMMAND_SERVICE_URL
-          value: "http://user-command-service:8086"
-        - name: S3_ENDPOINT
+        - name: USER_READ_SERVICE_URL
           valueFrom:
             configMapKeyRef:
               name: app-config
-              key: S3_ENDPOINT
-        - name: S3_PUBLIC_ENDPOINT
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: S3_PUBLIC_ENDPOINT
-        - name: S3_REGION
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: S3_REGION
-        - name: S3_BUCKET
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: S3_BUCKET
-        - name: S3_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: S3_ACCESS_KEY
-        - name: S3_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: S3_SECRET_KEY
+              key: USER_READ_SERVICE_URL
         readinessProbe:
           httpGet:
             path: /actuator/health

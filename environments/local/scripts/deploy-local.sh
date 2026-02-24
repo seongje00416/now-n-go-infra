@@ -31,6 +31,7 @@ MANIFESTS_DIR="$INFRA_LOCAL_DIR/manifests/dev"
 BE_PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../../mzc-final-project-be" && pwd)"
 BE_AUTH_DIR="$BE_PROJECT_DIR/common/auth/keycloak"
 BE_DOMAIN_AUTH_DIR="$BE_PROJECT_DIR/domain/auth"
+BE_DATA_AUTH_DIR="$BE_PROJECT_DIR/data/auth"
 BE_DOMAIN_PRODUCTS_DIR="$BE_PROJECT_DIR/domain/products"
 
 CLUSTER_NAME="local-dev"
@@ -192,11 +193,19 @@ DOCKERFILE
     log_info "Email Service 이미지 빌드 중..."
     docker build -t email-service:local -f "$BE_DOMAIN_AUTH_DIR/email-service/Dockerfile" "$BE_PROJECT_DIR"
 
-    # 6) Product Service
+    # 6) User Write Service (data layer)
+    log_info "User Write Service 이미지 빌드 중..."
+    docker build -t user-write-service:local -f "$BE_DATA_AUTH_DIR/user-write-service/Dockerfile" "$BE_PROJECT_DIR"
+
+    # 7) User Read Service (data layer)
+    log_info "User Read Service 이미지 빌드 중..."
+    docker build -t user-read-service:local -f "$BE_DATA_AUTH_DIR/user-read-service/Dockerfile" "$BE_PROJECT_DIR"
+
+    # 8) Product Service
     log_info "Product Service 이미지 빌드 중..."
     docker build -t product-service:local -f "$BE_DOMAIN_PRODUCTS_DIR/product-service/Dockerfile" "$BE_PROJECT_DIR"
 
-    # 7) Product Read Service
+    # 9) Product Read Service
     log_info "Product Read Service 이미지 빌드 중..."
     docker build -t product-read-service:local -f "$BE_DOMAIN_PRODUCTS_DIR/product-read-service/Dockerfile" "$BE_PROJECT_DIR"
 
@@ -207,7 +216,7 @@ DOCKERFILE
 load_images() {
     log_step "Kind 클러스터에 이미지 로드"
 
-    local images=("keycloak-local:latest" "gateway-service:local" "user-command-service:local" "user-query-service:local" "email-service:local" "product-service:local" "product-read-service:local")
+    local images=("keycloak-local:latest" "gateway-service:local" "user-command-service:local" "user-query-service:local" "email-service:local" "user-write-service:local" "user-read-service:local" "product-service:local" "product-read-service:local")
 
     for img in "${images[@]}"; do
         log_info "로드 중: $img"
@@ -323,6 +332,10 @@ deploy_infra() {
 deploy_apps() {
     log_step "앱 서비스 배포"
 
+    # Data 서비스 먼저 배포 (domain 서비스가 의존)
+    kubectl apply -f "$MANIFESTS_DIR/user-write-service.yaml"
+    kubectl apply -f "$MANIFESTS_DIR/user-read-service.yaml"
+
     kubectl apply -f "$MANIFESTS_DIR/gateway-service.yaml"
     kubectl apply -f "$MANIFESTS_DIR/user-command-service.yaml"
     kubectl apply -f "$MANIFESTS_DIR/user-query-service.yaml"
@@ -332,6 +345,8 @@ deploy_apps() {
 
     # 이미지 태그가 동일(:local)하므로 rollout restart로 새 이미지 반영
     log_info "앱 서비스 롤링 재시작..."
+    kubectl -n "$NAMESPACE" rollout restart deployment/user-write-service
+    kubectl -n "$NAMESPACE" rollout restart deployment/user-read-service
     kubectl -n "$NAMESPACE" rollout restart deployment/gateway-service
     kubectl -n "$NAMESPACE" rollout restart deployment/user-command-service
     kubectl -n "$NAMESPACE" rollout restart deployment/user-query-service
@@ -340,6 +355,8 @@ deploy_apps() {
     kubectl -n "$NAMESPACE" rollout restart deployment/product-read-service
 
     log_info "앱 서비스 Ready 대기 중..."
+    kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=user-write-service --timeout=120s 2>/dev/null || true
+    kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=user-read-service --timeout=120s 2>/dev/null || true
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=gateway-service --timeout=120s 2>/dev/null || true
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=user-command-service --timeout=120s 2>/dev/null || true
     kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app=user-query-service --timeout=120s 2>/dev/null || true
@@ -441,13 +458,15 @@ print_status() {
     echo "  Redis                 :   32Mi      64Mi"
     echo "  Keycloak              :  256Mi     512Mi"
     echo "  Gateway Service       :  128Mi     384Mi"
-    echo "  User Command Service  :  128Mi     384Mi"
-    echo "  User Query Service    :  128Mi     384Mi"
+    echo "  User Command Service  :  128Mi     320Mi"
+    echo "  User Query Service    :  128Mi     320Mi"
+    echo "  User Write Service    :  128Mi     320Mi"
+    echo "  User Read Service     :  128Mi     320Mi"
     echo "  Email Service         :  128Mi     384Mi"
     echo "  MinIO                 :  128Mi     256Mi"
     echo "  MailHog               :   32Mi      64Mi"
     echo "  ────────────────────────────────────────────"
-    echo -e "  ${GREEN}합계                    : 1.3GB     3.1GB${NC}"
+    echo -e "  ${GREEN}합계                    : 1.5GB     3.7GB${NC}"
     echo -e "  ${YELLOW}+ Kind 노드 + Docker ≈ 총 5~6GB 사용${NC}"
     echo ""
 

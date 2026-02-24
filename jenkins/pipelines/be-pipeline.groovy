@@ -1,5 +1,5 @@
 // BE 서비스 CI 파이프라인
-// develop 브랜치 polling → Docker multi-stage 빌드 → Registry Push → 매니페스트 업데이트
+// feature 브랜치 polling → Docker multi-stage 빌드 → Registry Push → 매니페스트 업데이트
 pipeline {
     agent any
 
@@ -71,6 +71,30 @@ pipeline {
                         }
                     }
                 }
+                stage('user-write-service') {
+                    steps {
+                        dir('be') {
+                            sh """
+                                docker build \
+                                    -t ${REGISTRY}/user-write-service:${IMAGE_TAG} \
+                                    -f data/auth/user-write-service/Dockerfile .
+                                docker push ${REGISTRY}/user-write-service:${IMAGE_TAG}
+                            """
+                        }
+                    }
+                }
+                stage('user-read-service') {
+                    steps {
+                        dir('be') {
+                            sh """
+                                docker build \
+                                    -t ${REGISTRY}/user-read-service:${IMAGE_TAG} \
+                                    -f data/auth/user-read-service/Dockerfile .
+                                docker push ${REGISTRY}/user-read-service:${IMAGE_TAG}
+                            """
+                        }
+                    }
+                }
                 stage('keycloak') {
                     steps {
                         dir('be/common/auth/keycloak') {
@@ -106,7 +130,13 @@ DEOF
 
                         sh """
                             cd charts/ticket-service
-                            sed -i 's|beImageTag:.*|beImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|gatewayImageTag:.*|gatewayImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|userCommandImageTag:.*|userCommandImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|userQueryImageTag:.*|userQueryImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|userWriteImageTag:.*|userWriteImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|userReadImageTag:.*|userReadImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|emailImageTag:.*|emailImageTag: "${IMAGE_TAG}"|' values.yaml
+                            sed -i 's|keycloakImageTag:.*|keycloakImageTag: "${IMAGE_TAG}"|' values.yaml
                         """
 
                         sh """

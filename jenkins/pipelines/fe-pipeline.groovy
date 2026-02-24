@@ -1,5 +1,5 @@
 // FE 서비스 CI 파이프라인
-// develop 브랜치 polling → npm build → Nginx Docker 이미지 → Registry Push → 매니페스트 업데이트
+// feature 브랜치 polling → npm build → Nginx Docker 이미지 → Registry Push → 매니페스트 업데이트
 pipeline {
     agent any
 
@@ -40,10 +40,78 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 dir('fe') {
-                    // Nginx 기반 정적 서빙 이미지
+                    // Nginx 기반 정적 서빙 + API 리버스 프록시 이미지
                     sh """
+                        cat > nginx.conf <<'NGINX'
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # API 요청 → gateway-service 프록시
+    location /api/ {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$http_host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+    }
+
+    # OAuth2 로그인/콜백 → gateway-service
+    location /oauth2/ {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$http_host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+    }
+
+    location /login/oauth2/ {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$http_host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+    }
+
+    # 로그아웃 → gateway-service
+    location /logout {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$http_host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+    }
+
+    # Actuator → gateway-service
+    location /actuator/ {
+        proxy_pass http://gateway-service:8080;
+        proxy_set_header Host \$http_host;
+    }
+
+    # WebSocket(채팅) → chat-service
+    location /ws {
+        proxy_pass http://chat-service:8096;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$http_host;
+    }
+
+    # SPA 라우팅 — 정적 파일 없으면 index.html
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+}
+NGINX
                         cat > Dockerfile.ci <<'EOF'
 FROM nginx:alpine
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY dist/ /usr/share/nginx/html/
 EXPOSE 80
 EOF

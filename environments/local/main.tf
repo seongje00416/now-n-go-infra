@@ -86,7 +86,7 @@ resource "kind_cluster" "default" {
         protocol       = "TCP"
       }
       extra_port_mappings {
-        container_port = 30025                      # NodePort로 노출할 MailHog 웹 UI 포트
+        container_port = 30025                      # NodePort로 노출할 MailHog Web UI 포트
         host_port      = 8025                       # 호스트에서 접근할 포트
         protocol       = "TCP"
       }
