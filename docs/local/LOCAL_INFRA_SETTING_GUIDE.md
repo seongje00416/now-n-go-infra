@@ -1,41 +1,37 @@
 # 로컬 환경 인프라 구축
 - 로컬 환경에서 개발 후 다른 서비스와의 연결을 테스트할 수 있는 로컬 테스트 환경을 위한 인프라입니다.
 - 로컬 인프라에 기본으로 구축되는 서비스는 다음과 같습니다.
-### 1. Kubernetes
-- kind를 사용해 로컬 클러스터를 구축합니다,
-- MetalLB를 사용해 로컬 환경에서 로드밸런서를 구현합니다.
-- 서비스 배포를 위해 Helm Chart를 사용합니다.
-- 라우팅을 위해 Nginx Ingress Controller를 사용합니다.
-- PV, PVC는 로컬 메모리를 사용합니다.
-### 2. ArgoCD
-- 개발이 완료된 서비스는 ArgoCD를 통해 배포합니다.
-- 서비스 배포 자동화 및 이미 배포 완료된 서비스들을 동기화하기 위해 사용합니다.
-### 3. Redis
-- 캐시 등을 위해 Redis를 사용합니다.
-### 4. Kafka
-- 데이터 동기화 및 이벤트 브로커 사용을 위해 Kafka를 사용합니다.
-# 구축 방법
-- 로컬 인프라는 공용 인프라에 변동이 없는 한 최초 1회만 만들어 두면 데이터가 유지됩니다.
-- 단, 클러스터를 강제로 삭제하는 등의 작업을 수행하게 되면 데이터가 소실됩니다.
-- 전체적인 구축 순서는 다음과 같습니다.
-```
-로컬 작업을 위한 라이브러리 설치( kind, helm, kubectl, terraform ) -> Terraform을 통한 클러스터 기초 구축
--> Kafka 서비스 배포 -> ArgoCD를 통한 클러스터 동기화
-```
-- Redis, ArgoCD 등 대부분의 서비스는 최초 Terraform을 통해 함께 수행되나 Kafka의 경우 별도 배포 스크립트 실행이 필요합니다.
+1. Kind 클러스터 ( K8S 클러스터 )
+2. ArgoCD
+3. Kakfa
+4. Redis
+5. Common Services
+    - gateway-service : BE 게이트웨이
+    - email-service : 이메일 서비스
+    - user-command-service
+    - user-query-service
+    - minio : 로컬 스토리지
+## 로컬 인프라 구축 과정
+1. 로컬 작업을 위한 라이브러리 설치
+    - kind, terraform, kubectl 설치가 필요합니다.
+2. Terraform을 통한 인프라 구축
+    - kind 클러스터 및 ArgoCD, Auth Service, Redis 등 대부분의 인프라는 Terraform을 통해 구축됩니다.
+3. 서비스 모듈 배포
+    - Kafka의 경우 추가 작업을 통해 배포가 필요합니다.
+
 ### 0. 기본 파일 준비
-- 대부분의 파일은 Git에서 pull 하는 것으로 가져오지만 중요 정보가 담긴 파일은 Git에 올릴 수 없으므로 따로 만들어야 합니다.
-- 만들어야 하는 파일 목록은 다음과 같습니다.
-    1) /environment/local/terraform.tfvars
-###### terraform.tfvars
-- 본인의 환경에 맞는 값으로 바꿔서 저장해주세요.
-> cluster_name = "local-dev"
-> namespaces   = ["dev", "monitoring"]      
-> github_username = "Github 사용자명( 이메일X )"
-> github_token    = "Github PAT 값. ghp_로 시작하는 문자열"
-> redis_password = "mypassword123"
-- cluster_name과 namespace는 그대로 사용하면 됩니다.
-- github 관련 값은 본인의 Github 계정에 맞게 사용해주세요. Token은 PAT 값입니다.
+- infra/environment/local 경로에 아래 파일이 존재하는지 확인합니다.
+    1. main.tf
+    2. varlues.tf
+    3. outputs.tf
+    4. redis.tf
+    5. argocd.tf
+    6. manifests/ci
+    7. manifests/dev
+    8. terraform.tfvars
+- terraform.tfvars의 경우, 민감한 정보가 기록된 파일이므로 로컬에서 작성이 필요합니다.
+    - terraform.tfvars.example 파일을 참고해 작성합니다.
+    - github_username과 github_token만 자신의 값에 맞게 수정합니다.
 - redis_password는 로컬 Redis에서 사용할 비밀번호 입니다. 자유롭게 지정해주셔도 됩니다. ( 추후 redis 모듈의 application.yml에 작성해주어야 하니 기억해둡시다. )
 
 ### 1. 로컬 작업을 위한 라이브러리 설치
@@ -109,6 +105,9 @@ terraform init
 terraform plan
 
 # Terraform 파일을 통한 인프라 구축
+# 1. 클러스터 우선 생성
+terraform apply -target=kind_cluster.default
+# 2. 나머지 인프라 생성
 terraform apply
 ```
 - 구축 과정에서 에러가 난다면 어떤 에러인지 확인하기
@@ -140,14 +139,15 @@ kubectl get nodes
 - 세 개의 노드의 STATUS가 모두 Ready인지 확인
 ```
 # 현재 실행 중인 파드 확인
+kubectl get pods -n dev
 kubectl get pods -n redis
 kubectl get pods -n argocd
 ```
 - redis의 경우 1개의 Pod가 Running 상태이면 완료
 - argocd의 경우 모든 Pod가 Running 상태이면 완료
+- dev의 경우 Pod들이 정상적으로 Running 상태이면 완료
 
 ##### ArgoCD 접속 확인
-- 추후 로컬 배포 및 ArgoCD 동기화를 진행하면 각 Pod들이 정상적으로 ArgoCD에서 관리되고 있는지 확인이 필요한 경우가 있다.
 ```
 # ArgoCD 접속 비밀번호 확인 ( username은 admin )
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
@@ -189,25 +189,31 @@ helm uninstall kafka -n kafka
 
 ## 배포 환경 상세 설명
 ### 클러스터
-<table>
-    <thead>
-        <tr>
-            <td> 대상 </td>
-            <td> 값 </td>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td> 클러스터 이름 </td>
-            <td> local-dev </td>
-        </tr>
-        <tr>
-            <td> 네임스페이스 </td>
-            <td> dev, argocd, kafka, redis </td>
-        </tr>
-        <tr>
-            <td> 노드 수 </td>
-            <td> Control-Plane 1개, Worker Node 2개 </td>
-        </tr>
-    </tbody>
-</table>
+#### 네임스페이스 전략
+| 네임스페이스명 | 역할 |
+| :---: | :---: |
+| dev | 마이크로 서비스들이 배포되는 네임스페이스입니다. |
+| argocd | ArgoCD가 작동하는 네임스페이스입니다. |
+| redis | 공용 Redis 서비스가 작동하는 네임스페이스입니다. |
+| kafka | 공용 Kafka 서비스가 작동하는 네임스페이스입니다. |
+
+#### 서비스 경로
+- 개발해서 배포하는 모든 서비스는 dev 네임스페이스에 배포되어야 합니다.
+- 일부 공통 모듈 외 모든 서비스는 dev 네임스페이스에 배포되기 때문에 호출시 다음과 같은 엔드포인트로 호출할 수 있습니다.
+```
+서비스명:포트번호
+ex) user-command-service:8086
+```
+- 공용 Kafka, Redis의 경우 별도의 네임스페이스를 사용하기 때문에 FQDN을 사용합니다.
+- FQDN의 기본적인 형태는 다음과 같습니다.
+```
+서비스명.네임스페이스.svc.cluster.local:포트번호
+```
+- 현재 로컬 클러스터에서 사용할 수 있는 FQDN은 다음과 같습니다.
+| 서비스명 | FQDN |
+| :---: | :---: |
+| Redis | redis-master.redis.svc.cluster.local:6379 |
+| Kafka | kafka.kafka.svc.cluster.local:9092 |
+
+
+

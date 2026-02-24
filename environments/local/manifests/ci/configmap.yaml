@@ -37,6 +37,10 @@ data:
   BOOKING_DB_HOST: "postgres-booking"
   BOOKING_DB_PORT: "5432"
 
+  # Product DB
+  PRODUCT_DB_HOST: "postgres-products"
+  PRODUCT_DB_PORT: "5432"
+
   # Social Login
   SOCIAL_LOGIN_SUCCESS_URL: "https://localhost:3000/dashboard"
   SOCIAL_LOGIN_ERROR_URL: "https://localhost:3000/login"

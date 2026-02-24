@@ -62,6 +62,16 @@ spec:
           value: "true"
         - name: KC_PROXY_HEADERS
           value: "xforwarded"
+        - name: SMTP_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SMTP_HOST
+        - name: SMTP_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SMTP_PORT
         - name: SMTP_USER
           valueFrom:
             secretKeyRef:
