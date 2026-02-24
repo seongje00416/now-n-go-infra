@@ -1,34 +1,49 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat-service
+  name: live-write-service
   namespace: dev
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: chat-service
+      app: live-write-service
   template:
     metadata:
       labels:
-        app: chat-service
+        app: live-write-service
     spec:
       containers:
-      - name: chat-service
-        image: {{ .Values.registry }}/chat-service:{{ .Values.chatImageTag }}
+      - name: live-write-service
+        image: {{ .Values.registry }}/live-write-service:{{ .Values.liveWriteImageTag }}
         imagePullPolicy: Always
         ports:
-        - containerPort: 8096
+        - containerPort: 8190
         env:
         - name: JAVA_OPTS
           value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
         - name: SPRING_PROFILES_ACTIVE
           value: "k8s"
-        - name: KAFKA_BOOTSTRAP_SERVERS
+        - name: BOOKING_DB_HOST
           valueFrom:
             configMapKeyRef:
               name: app-config
-              key: KAFKA_BUSINESS_BOOTSTRAP_SERVERS
+              key: BOOKING_DB_HOST
+        - name: BOOKING_DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: BOOKING_DB_PORT
+        - name: BOOKING_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: BOOKING_DB_USER
+        - name: BOOKING_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: BOOKING_DB_PASSWORD
         - name: REDIS_HOST
           valueFrom:
             configMapKeyRef:
@@ -49,15 +64,10 @@ spec:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
-        - name: CHAT_WRITE_SERVICE_URL
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: CHAT_WRITE_SERVICE_URL
         readinessProbe:
           httpGet:
             path: /actuator/health
-            port: 8096
+            port: 8190
           initialDelaySeconds: 30
           periodSeconds: 10
         resources:
@@ -71,11 +81,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-service
+  name: live-write-service
   namespace: dev
 spec:
   selector:
-    app: chat-service
+    app: live-write-service
   ports:
-  - port: 8096
-    targetPort: 8096
+  - port: 8190
+    targetPort: 8190

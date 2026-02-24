@@ -18,3 +18,9 @@ liveCommandImageTag: "15"
 liveQueryImageTag: "15"
 chatImageTag: "15"
 communityImageTag: "15"
+
+# Live data 서비스 이미지 태그
+liveWriteImageTag: "1"
+liveReadImageTag: "1"
+communityWriteImageTag: "1"
+chatWriteImageTag: "1"

@@ -1,34 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat-service
+  name: live-read-service
   namespace: dev
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: chat-service
+      app: live-read-service
   template:
     metadata:
       labels:
-        app: chat-service
+        app: live-read-service
     spec:
       containers:
-      - name: chat-service
-        image: {{ .Values.registry }}/chat-service:{{ .Values.chatImageTag }}
+      - name: live-read-service
+        image: {{ .Values.registry }}/live-read-service:{{ .Values.liveReadImageTag }}
         imagePullPolicy: Always
         ports:
-        - containerPort: 8096
+        - containerPort: 8191
         env:
         - name: JAVA_OPTS
           value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
         - name: SPRING_PROFILES_ACTIVE
           value: "k8s"
-        - name: KAFKA_BOOTSTRAP_SERVERS
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: KAFKA_BUSINESS_BOOTSTRAP_SERVERS
         - name: REDIS_HOST
           valueFrom:
             configMapKeyRef:
@@ -44,20 +39,25 @@ spec:
             secretKeyRef:
               name: app-secret
               key: REDIS_BUSINESS_PASSWORD
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_BUSINESS_BOOTSTRAP_SERVERS
         - name: INTERNAL_API_KEY
           valueFrom:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
-        - name: CHAT_WRITE_SERVICE_URL
+        - name: LIVE_WRITE_SERVICE_URL
           valueFrom:
             configMapKeyRef:
               name: app-config
-              key: CHAT_WRITE_SERVICE_URL
+              key: LIVE_WRITE_SERVICE_URL
         readinessProbe:
           httpGet:
             path: /actuator/health
-            port: 8096
+            port: 8191
           initialDelaySeconds: 30
           periodSeconds: 10
         resources:
@@ -65,17 +65,17 @@ spec:
             memory: "128Mi"
             cpu: "100m"
           limits:
-            memory: "384Mi"
+            memory: "320Mi"
             cpu: "300m"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-service
+  name: live-read-service
   namespace: dev
 spec:
   selector:
-    app: chat-service
+    app: live-read-service
   ports:
-  - port: 8096
-    targetPort: 8096
+  - port: 8191
+    targetPort: 8191

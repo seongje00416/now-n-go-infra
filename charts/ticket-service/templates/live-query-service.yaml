@@ -24,31 +24,16 @@ spec:
           value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
         - name: SPRING_PROFILES_ACTIVE
           value: "k8s"
-        - name: KAFKA_BOOTSTRAP_SERVERS
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: KAFKA_BUSINESS_BOOTSTRAP_SERVERS
-        - name: REDIS_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: REDIS_BUSINESS_HOST
-        - name: REDIS_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: REDIS_BUSINESS_PORT
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: REDIS_BUSINESS_PASSWORD
         - name: INTERNAL_API_KEY
           valueFrom:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
+        - name: LIVE_READ_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: LIVE_READ_SERVICE_URL
         readinessProbe:
           httpGet:
             path: /actuator/health
@@ -60,7 +45,7 @@ spec:
             memory: "128Mi"
             cpu: "100m"
           limits:
-            memory: "384Mi"
+            memory: "320Mi"
             cpu: "300m"
 ---
 apiVersion: v1

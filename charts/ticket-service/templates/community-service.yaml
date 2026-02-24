@@ -24,51 +24,21 @@ spec:
           value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
         - name: SPRING_PROFILES_ACTIVE
           value: "k8s"
-        - name: BOOKING_DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: BOOKING_DB_HOST
-        - name: BOOKING_DB_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: BOOKING_DB_PORT
-        - name: BOOKING_DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: BOOKING_DB_USER
-        - name: BOOKING_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: BOOKING_DB_PASSWORD
         - name: KAFKA_BOOTSTRAP_SERVERS
           valueFrom:
             configMapKeyRef:
               name: app-config
               key: KAFKA_BUSINESS_BOOTSTRAP_SERVERS
-        - name: REDIS_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: REDIS_BUSINESS_HOST
-        - name: REDIS_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: REDIS_BUSINESS_PORT
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: REDIS_BUSINESS_PASSWORD
         - name: INTERNAL_API_KEY
           valueFrom:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
+        - name: COMMUNITY_WRITE_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: COMMUNITY_WRITE_SERVICE_URL
         - name: LIVE_QUERY_SERVICE_URL
           valueFrom:
             configMapKeyRef:
