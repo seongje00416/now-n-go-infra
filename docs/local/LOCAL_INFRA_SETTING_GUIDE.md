@@ -105,6 +105,9 @@ terraform init
 terraform plan
 
 # Terraform 파일을 통한 인프라 구축
+# 1. 클러스터 우선 생성
+terraform apply -target=kind_cluster.default
+# 2. 나머지 인프라 생성
 terraform apply
 ```
 - 구축 과정에서 에러가 난다면 어떤 에러인지 확인하기
