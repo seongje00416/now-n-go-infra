@@ -8,7 +8,7 @@ userQueryImageTag: "29"
 userWriteImageTag: "29"
 userReadImageTag: "29"
 emailImageTag: "23"
-keycloakImageTag: "32"
+keycloakImageTag: "33"
 
 # FE 이미지 태그 (Jenkins FE 파이프라인에서 자동 업데이트)
 feImageTag: "22"
