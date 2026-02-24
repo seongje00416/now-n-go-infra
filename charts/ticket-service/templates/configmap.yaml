@@ -48,16 +48,9 @@ data:
   # Frontend URL
   APP_FRONTEND_URL: "http://localhost:3000"
 
-  # Live 서비스
-  LIVE_QUERY_SERVICE_URL: "http://live-query-service:8101"
-
   # 내부 서비스 URL (data 서비스)
   USER_WRITE_SERVICE_URL: "http://user-write-service:8188"
   USER_READ_SERVICE_URL: "http://user-read-service:8189"
-  LIVE_WRITE_SERVICE_URL: "http://live-write-service:8190"
-  LIVE_READ_SERVICE_URL: "http://live-read-service:8191"
-  CHAT_WRITE_SERVICE_URL: "http://chat-write-service:8193"
-  COMMUNITY_WRITE_SERVICE_URL: "http://community-write-service:8192"
 
   # S3 (MinIO)
   S3_ENDPOINT: "https://minio:9000"

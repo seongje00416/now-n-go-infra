@@ -21,7 +21,7 @@ jenkins:
           - key: "REGISTRY_URL"
             value: "localhost:5000"
           - key: "GIT_BRANCH"
-            value: "local/hsj/1-individual-branch"
+            value: "develop"
 
 credentials:
   system:
@@ -41,7 +41,7 @@ unclassified:
 jobs:
   - script: |
       pipelineJob('be-pipeline') {
-        description('BE 서비스 CI 파이프라인 — BE repo feature/hsj/22-ivs-live-commerce 브랜치 polling')
+        description('BE 서비스 CI 파이프라인 — BE repo develop 브랜치 polling')
         definition {
           cpsScm {
             scm {
@@ -50,7 +50,7 @@ jobs:
                   url('${GITHUB_BE_REPO_URL}')
                   credentials('github-pat')
                 }
-                branch('feature/hsj/22-ivs-live-commerce')
+                branch('develop')
               }
             }
             scriptPath('Jenkinsfile')
@@ -71,7 +71,7 @@ jobs:
                   url('${GITHUB_INFRA_REPO_URL}')
                   credentials('github-pat')
                 }
-                branch('local/hsj/1-individual-branch')
+                branch('develop')
               }
             }
             scriptPath('jenkins/pipelines/fe-pipeline.groovy')
