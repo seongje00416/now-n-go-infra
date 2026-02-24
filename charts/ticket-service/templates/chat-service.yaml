@@ -49,6 +49,26 @@ spec:
             secretKeyRef:
               name: app-secret
               key: INTERNAL_API_KEY
+        - name: BOOKING_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: BOOKING_DB_HOST
+        - name: BOOKING_DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: BOOKING_DB_PORT
+        - name: BOOKING_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: BOOKING_DB_USER
+        - name: BOOKING_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: BOOKING_DB_PASSWORD
         - name: CHAT_WRITE_SERVICE_URL
           valueFrom:
             configMapKeyRef:
