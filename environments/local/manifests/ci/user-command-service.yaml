@@ -24,6 +24,26 @@ spec:
           value: "-Xms128m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m"
         - name: SPRING_PROFILES_ACTIVE
           value: "k8s"
+        - name: USER_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: USER_DB_HOST
+        - name: USER_DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: USER_DB_PORT
+        - name: USER_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: USER_DB_USER
+        - name: USER_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: USER_DB_PASSWORD
         - name: KAFKA_BOOTSTRAP_SERVERS
           valueFrom:
             configMapKeyRef:

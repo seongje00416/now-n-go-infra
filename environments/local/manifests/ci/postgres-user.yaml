@@ -21,7 +21,7 @@ spec:
         - containerPort: 5432
         env:
         - name: POSTGRES_DB
-          value: "user_service"
+          value: "userdb"
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
@@ -37,7 +37,7 @@ spec:
           mountPath: /var/lib/postgresql/data
         readinessProbe:
           exec:
-            command: ["pg_isready", "-U", "userservice", "-d", "user_service"]
+            command: ["pg_isready", "-U", "userservice", "-d", "userdb"]
           initialDelaySeconds: 5
           periodSeconds: 10
         resources:
