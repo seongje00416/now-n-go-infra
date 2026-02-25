@@ -34,6 +34,7 @@ chmod +x /usr/local/bin/docker-compose
 
 # 4. Infra 레포 클론
 INFRA_REPO=$(echo "${github_infra_repo_url}" | sed "s|https://|https://${github_username}:${github_token}@|")
+
 CLONE_DIR="/home/ubuntu/project-infra"
 
 git clone "$INFRA_REPO" "$CLONE_DIR"
@@ -46,7 +47,7 @@ GITHUB_USERNAME=${github_username}
 GITHUB_TOKEN=${github_token}
 GITHUB_BE_REPO_URL=${github_be_repo_url}
 GITHUB_FE_REPO_URL=${github_fe_repo_url}
-GITHUB_INFRA_REPO_URL=${github_infra_repo_url}
+GITHUB_ARGO_REPO_URL=${github_argo_repo_url}
 EOF
 chmod 600 "$PROJECT_DIR/.env"
 

@@ -72,3 +72,8 @@ variable "github_infra_repo_url" {
   description = "Infra 레포 URL (예: https://github.com/org/project-infra.git)"
   type        = string
 }
+
+variable "github_argo_repo_url" {
+  description = "Argo 레포 URL (예: https://github.com/org/project-argo.git)"
+  type        = string
+}
