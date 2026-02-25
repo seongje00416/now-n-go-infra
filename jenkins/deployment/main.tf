@@ -115,6 +115,7 @@ resource "aws_instance" "jenkins" {
     github_be_repo_url    = var.github_be_repo_url
     github_fe_repo_url    = var.github_fe_repo_url
     github_infra_repo_url = var.github_infra_repo_url
+    github_argo_repo_url  = var.github_argo_repo_url
     project_name          = var.project_name
   })
 
