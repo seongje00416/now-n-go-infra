@@ -51,7 +51,11 @@ GITHUB_ARGO_REPO_URL=${github_argo_repo_url}
 EOF
 chmod 600 "$PROJECT_DIR/.env"
 
-# 6. 소유권 설정 & docker-compose 실행
+# 6. docker.sock GID를 docker-compose.yml에 반영
+DOCKER_GID=$(getent group docker | cut -d: -f3)
+sed -i "s/\"999\"/\"$DOCKER_GID\"/" "$PROJECT_DIR/docker-compose.yml"
+
+# 7. 소유권 설정 & docker-compose 실행
 chown -R ubuntu:ubuntu "$CLONE_DIR"
 
 cd "$PROJECT_DIR"
