@@ -6,7 +6,7 @@ pipeline {
     environment {
         REGISTRY       = 'localhost:5000'
         BE_REPO_URL    = "${GITHUB_BE_REPO_URL}"
-        INFRA_REPO_URL = "${GITHUB_INFRA_REPO_URL}"
+        ARGO_REPO_URL  = "${GITHUB_ARGO_REPO_URL}"
         IMAGE_TAG      = "${BUILD_NUMBER}"
     }
 
@@ -99,9 +99,9 @@ DEOF
         stage('Update Manifests') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                    dir('infra') {
+                    dir('argo') {
                         git branch: 'develop',
-                            url: "${INFRA_REPO_URL}",
+                            url: "${ARGO_REPO_URL}",
                             credentialsId: 'github-pat'
 
                         sh """
@@ -112,7 +112,7 @@ DEOF
                         sh """
                             git config user.name 'Jenkins CI'
                             git config user.email 'jenkins@local'
-                            git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/MZC-Final-Project/mzc-final-project-infra.git
+                            git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/MZC-Final-Project/mzc-final-project-argo.git
                             git add charts/ticket-service/values.yaml
                             git commit -m "ci: BE 이미지 태그 업데이트 → ${IMAGE_TAG}" || echo 'No changes to commit'
                             git push origin develop
