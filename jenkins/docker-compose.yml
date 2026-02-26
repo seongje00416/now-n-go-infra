@@ -24,7 +24,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - ci-net
-    restart: "no"
+    restart: "unless-stopped"
 
   registry:
     image: registry:2
