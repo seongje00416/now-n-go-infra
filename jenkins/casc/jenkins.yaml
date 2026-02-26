@@ -62,19 +62,19 @@ jobs:
       }
   - script: |
       pipelineJob('fe-pipeline') {
-        description('FE 서비스 CI 파이프라인 — infra repo fe-pipeline.groovy 사용')
+        description('FE 서비스 CI 파이프라인 — FE repo develop 브랜치 polling')
         definition {
           cpsScm {
             scm {
               git {
                 remote {
-                  url('${GITHUB_INFRA_REPO_URL}')
+                  url('${GITHUB_FE_REPO_URL}')
                   credentials('github-pat')
                 }
                 branch('develop')
               }
             }
-            scriptPath('jenkins/pipelines/fe-pipeline.groovy')
+            scriptPath('Jenkinsfile')
           }
         }
         triggers {
