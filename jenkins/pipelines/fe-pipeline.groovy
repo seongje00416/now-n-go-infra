@@ -93,15 +93,6 @@ server {
         proxy_set_header Host \$http_host;
     }
 
-    # WebSocket(채팅) → chat-service
-    location /ws {
-        proxy_pass http://chat-service:8096;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$http_host;
-    }
-
     # SPA 라우팅 — 정적 파일 없으면 index.html
     location / {
         try_files \$uri \$uri/ /index.html;
