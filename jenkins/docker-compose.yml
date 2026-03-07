@@ -17,15 +17,14 @@ services:
       - CASC_JENKINS_CONFIG=/var/jenkins_home/casc
       - GITHUB_USERNAME=${GITHUB_USERNAME}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - GITHUB_INFRA_REPO_URL=${GITHUB_INFRA_REPO_URL}
+      - GITHUB_ARGO_REPO_URL=${GITHUB_ARGO_REPO_URL}
       - GITHUB_BE_REPO_URL=${GITHUB_BE_REPO_URL}
       - GITHUB_FE_REPO_URL=${GITHUB_FE_REPO_URL}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
       - ci-net
-      - kind              # Kind 클러스터 API 접근용
-    restart: unless-stopped
+    restart: "unless-stopped"
 
   registry:
     image: registry:2
@@ -36,8 +35,7 @@ services:
       - registry_data:/var/lib/registry
     networks:
       - ci-net
-      - kind              # Kind 클러스터 노드에서 레지스트리 접근용
-    restart: unless-stopped
+    restart: "no"
 
 volumes:
   jenkins_home:
@@ -46,5 +44,3 @@ volumes:
 networks:
   ci-net:
     driver: bridge
-  kind:
-    external: true        # Kind가 생성한 네트워크 (terraform apply 후 존재)

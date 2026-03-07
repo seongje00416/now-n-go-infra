@@ -37,6 +37,9 @@ data:
   BOOKING_DB_HOST: "postgres-booking"
   BOOKING_DB_PORT: "5432"
 
+  # Frontend URL
+  APP_FRONTEND_URL: "http://localhost:3000"
+
   # Social Login
   SOCIAL_LOGIN_SUCCESS_URL: "http://localhost:3000/dashboard"
   SOCIAL_LOGIN_ERROR_URL: "http://localhost:3000/login"

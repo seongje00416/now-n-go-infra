@@ -41,7 +41,7 @@ resource "kubectl_manifest" "github_repo_secret" {
         argocd.argoproj.io/secret-type: repository
     stringData:
       type: git
-      url: https://github.com/MZC-Final-Project/mzc-final-project-infra
+      url: https://github.com/MZC-Final-Project/mzc-final-project-argo
       username: ${var.github_username}
       password: ${var.github_token}
   YAML
@@ -49,7 +49,7 @@ resource "kubectl_manifest" "github_repo_secret" {
   depends_on = [helm_release.argocd]
 }
 
-# Jenkins CI/CD용 ArgoCD Application — manifests/ci/ 경로 감시
+# Jenkins CI/CD용 ArgoCD Application — argo 레포의 charts/ticket-service 경로 감시
 resource "kubectl_manifest" "argocd_application_ci" {
   yaml_body = <<-YAML
     apiVersion: argoproj.io/v1alpha1
@@ -60,8 +60,8 @@ resource "kubectl_manifest" "argocd_application_ci" {
     spec:
       project: default
       source:
-        repoURL: https://github.com/MZC-Final-Project/mzc-final-project-infra
-        targetRevision: local/hsj/1-individual-branch
+        repoURL: https://github.com/MZC-Final-Project/mzc-final-project-argo
+        targetRevision: develop
         path: charts/ticket-service
         helm:
           valueFiles:
