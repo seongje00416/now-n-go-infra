@@ -1,0 +1,143 @@
+name: ECS Deploy (Single Service)
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: 'Service to deploy'
+        required: true
+        type: choice
+        options:
+          - gateway-service
+          - user-command-service
+          - email-service
+          - user-write-service
+          - user-read-service
+          - products-create-service
+          - products-list-service
+          - products-write-service
+          - products-read-service
+          - cancellation-policy-data
+          - reviews-create-service
+          - reviews-list-service
+          - review-write-service
+          - review-read-service
+          - wishlist-data
+          - skus-write-service
+          - skus-read-service
+          - sku-flights-write-service
+          - sku-flights-read-service
+          - reservation-travel-service
+          - publish-order-service
+          - save-payments-service
+          - orders-write-service
+          - orders-read-service
+          - payments-write-service
+          - payments-read-service
+          - order-items-write-service
+          - order-items-read-service
+          - location-write-service
+          - location-read-service
+          - travel-ai
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECS_CLUSTER: nowandgo-prod
+
+jobs:
+  deploy-single:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        if: inputs.service_name != 'travel-ai'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Determine Dockerfile path
+        id: dockerfile
+        run: |
+          declare -A SERVICE_MAP
+          SERVICE_MAP[gateway-service]="domain/auth/gateway-service"
+          SERVICE_MAP[user-command-service]="domain/auth/user-command-service"
+          SERVICE_MAP[email-service]="domain/auth/email-service"
+          SERVICE_MAP[user-write-service]="data/auth/user-write-service"
+          SERVICE_MAP[user-read-service]="data/auth/user-read-service"
+          SERVICE_MAP[products-create-service]="domain/products/products-create-service"
+          SERVICE_MAP[products-list-service]="domain/products/products-list-service"
+          SERVICE_MAP[products-write-service]="data/products/products-write-service"
+          SERVICE_MAP[products-read-service]="data/products/products-read-service"
+          SERVICE_MAP[cancellation-policy-data]="data/products/cancellation-policy-data"
+          SERVICE_MAP[reviews-create-service]="domain/reviews/reviews-create-service"
+          SERVICE_MAP[reviews-list-service]="domain/reviews/reviews-list-service"
+          SERVICE_MAP[review-write-service]="data/reviews/review-write-service"
+          SERVICE_MAP[review-read-service]="data/reviews/review-read-service"
+          SERVICE_MAP[wishlist-data]="data/wishlists/wishlist-data"
+          SERVICE_MAP[skus-write-service]="data/skus/skus-write-service"
+          SERVICE_MAP[skus-read-service]="data/skus/skus-read-service"
+          SERVICE_MAP[sku-flights-write-service]="data/sku-flights/sku-flights-write-service"
+          SERVICE_MAP[sku-flights-read-service]="data/sku-flights/sku-flights-read-service"
+          SERVICE_MAP[reservation-travel-service]="domain/booking/reservation-travel-service"
+          SERVICE_MAP[publish-order-service]="domain/booking/publish-order-service"
+          SERVICE_MAP[save-payments-service]="domain/booking/save-payments-service"
+          SERVICE_MAP[orders-write-service]="data/orders/orders-write-service"
+          SERVICE_MAP[orders-read-service]="data/orders/orders-read-service"
+          SERVICE_MAP[payments-write-service]="data/payments/payments-write-service"
+          SERVICE_MAP[payments-read-service]="data/payments/payments-read-service"
+          SERVICE_MAP[order-items-write-service]="data/order-items/order-items-write-service"
+          SERVICE_MAP[order-items-read-service]="data/order-items/order-items-read-service"
+          SERVICE_MAP[location-write-service]="data/location/location-write-service"
+          SERVICE_MAP[location-read-service]="data/location/location-read-service"
+          SERVICE_MAP[travel-ai]="lambda/travel-ai"
+
+          SERVICE_PATH="${SERVICE_MAP[${{ inputs.service_name }}]}"
+          echo "service_path=$SERVICE_PATH" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ inputs.service_name }}" = "travel-ai" ]; then
+            echo "build_context=lambda/travel-ai/" >> "$GITHUB_OUTPUT"
+          else
+            echo "build_context=." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+          SERVICE_NAME: ${{ inputs.service_name }}
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$SERVICE_NAME:latest \
+            -f ${{ steps.dockerfile.outputs.service_path }}/Dockerfile \
+            ${{ steps.dockerfile.outputs.build_context }}
+          docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$SERVICE_NAME:latest
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service nowandgo-${{ inputs.service_name }} \
+            --force-new-deployment
+
+      - name: Wait for deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services nowandgo-${{ inputs.service_name }}
+          echo "Service ${{ inputs.service_name }} deployment complete"
