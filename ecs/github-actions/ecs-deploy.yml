@@ -2,7 +2,7 @@ name: ECS Deploy (All Services)
 
 on:
   push:
-    branches: [develop]
+    branches: [ecr-test]
 
 env:
   AWS_REGION: ap-northeast-2
