@@ -1,0 +1,33 @@
+# =============================================================================
+# ECS Fargate Infrastructure — terraform.tfvars
+# Copy this file to terraform.tfvars and fill in values
+# =============================================================================
+
+project_name = "nowandgo"
+environment  = "prod"
+aws_region   = "ap-northeast-2"
+
+# Database
+db_name     = "nowandgo"
+db_username = "postgres"
+db_password = "CHANGE_ME"
+
+# Redis
+redis_auth_password     = "CHANGE_ME"
+redis_business_password = "CHANGE_ME"
+
+# Encryption (from common-crypto module)
+encryption_aes_key  = "CHANGE_ME"
+encryption_hmac_key = "CHANGE_ME"
+
+# Internal API Key
+internal_api_key = "CHANGE_ME"
+
+# Keycloak
+keycloak_admin_password = "CHANGE_ME"
+
+# Domain (optional)
+# domain_name = "nowandgo.com"
+
+# Logging
+log_retention_days = 30
