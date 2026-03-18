@@ -34,6 +34,22 @@ variable "node_max_size" {
   default     = 3
 }
 
+variable "db_name" {
+  description = "RDS 데이터베이스 이름"
+  type        = string
+}
+
+variable "db_username" {
+  description = "RDS 마스터 사용자명"
+  type        = string
+}
+
+variable "db_password" {
+  description = "RDS 마스터 비밀번호"
+  type        = string
+  sensitive   = true
+}
+
 variable "github_username" {
   description = "GitHub 사용자명"
   type        = string
