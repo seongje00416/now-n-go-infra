@@ -1,19 +1,13 @@
 variable "cluster_name" {
   description = "EKS 클러스터 이름"
   type        = string
-  default     = "team2-production-stage"
+  default     = "now-n-go-cluster"
 }
 
 variable "aws_region" {
   description = "AWS 리전"
   type        = string
-  default     = "ap-northeast-2"   # 서울 리전
-}
-
-variable "namespaces" {
-  description = "생성할 네임스페이스 목록"
-  type        = list(string)
-  default     = ["prod", "monitoring"]
+  default     = "ap-northeast-2"
 }
 
 variable "node_instance_type" {
@@ -38,12 +32,6 @@ variable "node_max_size" {
   description = "노드 그룹 최대 노드 수"
   type        = number
   default     = 3
-}
-
-variable "redis_password" {
-  description = "Redis 비밀번호"
-  type        = string
-  sensitive   = true
 }
 
 variable "github_username" {
