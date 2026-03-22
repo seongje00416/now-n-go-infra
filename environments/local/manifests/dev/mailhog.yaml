@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: mailhog
-        image: mailhog/mailhog:v1.0.1
+        image: axllent/mailpit:v1.29.3
         ports:
         - containerPort: 1025  # SMTP
           name: smtp

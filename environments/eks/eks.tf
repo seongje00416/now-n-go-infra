@@ -116,7 +116,6 @@ resource "kubernetes_storage_class" "ebs_storage" {
 # ============================================================
 # prod 네임스페이스
 #  EKS 클러스터 생성 직후 prod 네임스페이스를 미리 생성
-#  ArgoCD가 배포를 시작하기 전에 네임스페이스가 존재하도록 보장
 # ============================================================
 resource "kubernetes_namespace" "prod" {
   metadata {
@@ -129,4 +128,22 @@ resource "kubernetes_namespace" "prod" {
   }
 
   depends_on = [aws_eks_node_group.main]
+}
+
+# ============================================================
+# Outputs
+# ============================================================
+output "cluster_name" {
+  description = "EKS 클러스터 이름"
+  value       = aws_eks_cluster.main.name
+}
+
+output "cluster_endpoint" {
+  description = "EKS 클러스터 API 엔드포인트"
+  value       = aws_eks_cluster.main.endpoint
+}
+
+output "cluster_version" {
+  description = "EKS 클러스터 Kubernetes 버전"
+  value       = aws_eks_cluster.main.version
 }

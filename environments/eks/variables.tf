@@ -50,17 +50,6 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "github_username" {
-  description = "GitHub 사용자명"
-  type        = string
-}
-
-variable "github_token" {
-  description = "GitHub Personal Access Token"
-  type        = string
-  sensitive   = true
-}
-
 variable "redis_password" {
   description = "Redis 인증 비밀번호"
   type        = string

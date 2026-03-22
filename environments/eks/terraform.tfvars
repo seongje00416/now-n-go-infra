@@ -15,13 +15,10 @@ kc_admin_password      = "admin"
 keycloak_client_secret = "bff-secret-local-dev"
 
 # S3
-# s3_access_key = "your-aws-access-key"
-# s3_secret_key = "your-aws-secret-key"
+# s3_access_key / s3_secret_key 는 iam.tf의 aws_iam_access_key.s3_app_key 에서 자동 생성됨
 
 # 기타
 internal_api_key = "your-internal-api-key"
-github_username = "seongje00416"
-github_token    = "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"
 
 # OAuth (선택)
 google_client_id     = ""
