@@ -19,7 +19,7 @@ variable "node_instance_type" {
 variable "node_desired_size" {
   description = "노드 그룹 원하는 노드 수"
   type        = number
-  default     = 4
+  default     = 3
 }
 
 variable "node_min_size" {
@@ -31,7 +31,7 @@ variable "node_min_size" {
 variable "node_max_size" {
   description = "노드 그룹 최대 노드 수"
   type        = number
-  default     = 5
+  default     = 4
 }
 
 variable "db_name" {
@@ -73,8 +73,6 @@ variable "keycloak_client_secret" {
   type        = string
   sensitive   = true
 }
-
-# s3_access_key / s3_secret_key 는 iam.tf의 aws_iam_access_key.s3_app_key 에서 자동 생성됨
 
 variable "internal_api_key" {
   description = "내부 서비스 간 인증 API Key"

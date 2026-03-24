@@ -33,8 +33,6 @@ resource "kubernetes_secret" "app_secret" {
     REDIS_PASSWORD          = var.redis_password
     REDIS_BUSINESS_PASSWORD = var.redis_business_password
     KEYCLOAK_CLIENT_SECRET  = var.keycloak_client_secret
-    S3_ACCESS_KEY           = aws_iam_access_key.s3_app_key.id
-    S3_SECRET_KEY           = aws_iam_access_key.s3_app_key.secret
     INTERNAL_API_KEY        = var.internal_api_key
     GOOGLE_CLIENT_ID        = var.google_client_id
     GOOGLE_CLIENT_SECRET    = var.google_client_secret
@@ -110,11 +108,6 @@ resource "kubernetes_config_map" "app_config" {
     # ── SMTP (MailHog in-cluster) ─────────────────────────
     SMTP_HOST = "mailhog"
     SMTP_PORT = "1025"
-
-    # ── AWS S3 ────────────────────────────────────────────
-    S3_REGION   = var.aws_region
-    S3_ENDPOINT = "https://s3.${var.aws_region}.amazonaws.com"
-    S3_BUCKET   = "${var.cluster_name}-bucket"
 
     # ── 서비스 간 URL ────────────────────────────────────
     USER_WRITE_SERVICE_URL          = "http://user-write-service"

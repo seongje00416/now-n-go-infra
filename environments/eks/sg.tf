@@ -51,28 +51,3 @@ resource "aws_security_group_rule" "eks_gateway_inbound" {
   security_group_id = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
   description       = "Allow inbound 8080 for gateway-service"
 }
-
-# ============================================================
-# gateway-service — NLB 어노테이션 패치
-#  기본 CLB 대신 NLB(Network Load Balancer) 사용
-#  NLB는 CLB보다 지연 시간이 낮고 EKS에 최적화됨
-#  preserve_client_ip: 실제 클라이언트 IP를 파드까지 전달
-# ============================================================
-resource "kubernetes_annotations" "gateway_service_nlb" {
-  api_version = "v1"
-  kind        = "Service"
-
-  metadata {
-    name      = "gateway-service"
-    namespace = "prod"
-  }
-
-  annotations = {
-    "service.beta.kubernetes.io/aws-load-balancer-type"                              = "nlb"
-    "service.beta.kubernetes.io/aws-load-balancer-scheme"                            = "internet-facing"
-    "service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled" = "true"
-  }
-
-  # 기존 어노테이션 덮어쓰기 허용
-  force = true
-}

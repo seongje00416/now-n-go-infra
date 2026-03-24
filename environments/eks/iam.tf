@@ -99,42 +99,40 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
 }
 
 # ============================================================
-# IAM - S3 접근용 앱 전용 유저
-#  EKS 파드(user-read-service, media-data 등)가 S3에 접근할 때 사용
-#  정적 Access Key 방식 (IRSA로 전환 시 이 유저 제거 가능)
+# IRSA — AWS Load Balancer Controller (LBC)
+#  Ingress 리소스를 감지해 ALB를 자동 프로비저닝하는 컨트롤러
 # ============================================================
-resource "aws_iam_user" "s3_app_user" {
-  name = "${var.cluster_name}-s3-app-user"
 
-  tags = {
-    Name       = "${var.cluster_name}-s3-app-user"
-    managed-by = "terraform"
-  }
+# LBC 공식 IAM 정책 (AWS GitHub에서 fetch)
+data "http" "lbc_iam_policy" {
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.8.3/docs/install/iam_policy.json"
 }
 
-resource "aws_iam_user_policy" "s3_app_policy" {
-  name = "${var.cluster_name}-s3-app-policy"
-  user = aws_iam_user.s3_app_user.name
+resource "aws_iam_policy" "lbc" {
+  name   = "${var.cluster_name}-lbc-policy"
+  policy = data.http.lbc_iam_policy.response_body
+}
 
-  policy = jsonencode({
+resource "aws_iam_role" "lbc" {
+  name = "${var.cluster_name}-lbc-role"
+
+  assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
-      Action = [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject",
-        "s3:ListBucket"
-      ]
-      Resource = [
-        aws_s3_bucket.main.arn,
-        "${aws_s3_bucket.main.arn}/*"
-      ]
+      Effect    = "Allow"
+      Principal = { Federated = aws_iam_openid_connect_provider.eks.arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud" = "sts.amazonaws.com"
+          "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+        }
+      }
     }]
   })
 }
 
-# Access Key 자동 생성 — secret은 Terraform state에 저장됨
-resource "aws_iam_access_key" "s3_app_key" {
-  user = aws_iam_user.s3_app_user.name
+resource "aws_iam_role_policy_attachment" "lbc" {
+  role       = aws_iam_role.lbc.name
+  policy_arn = aws_iam_policy.lbc.arn
 }

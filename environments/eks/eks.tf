@@ -45,6 +45,8 @@ resource "aws_eks_node_group" "main" {
     aws_iam_role_policy_attachment.eks_worker_node_policy,
     aws_iam_role_policy_attachment.eks_cni_policy,
     aws_iam_role_policy_attachment.eks_container_registry,
+    aws_route_table_association.private,  # private 서브넷 NAT 라우팅이 준비된 후 노드 생성
+    aws_route_table_association.public,   # public 서브넷 IGW 라우팅 (NAT가 인터넷으로 나가기 위해)
   ]
 }
 
