@@ -1,13 +1,13 @@
 # 인프라 구축 개요
 ## 기술 스택
-| 분야 | 사용 기술 스택 |
-| :---: | :----: |
-| 컨테이너 | Docker |
-| 오케스트레이션 | Kubernetes |
-| CI | Jenkins |
-| CD | ArgoCD |
-| Broker | Kafka |
-| IaC | Terraform |
+| 분야 |    사용 기술 스택    |
+| :---: |:--------------:|
+| 컨테이너 |     Docker     |
+| 오케스트레이션 |   Kubernetes   |
+| CI | Github Actions |
+| CD |     ArgoCD     |
+| Broker |    AWS SQS     |
+| IaC |   Terraform    |
 
 ### 로컬 개발 환경
 #### kind 

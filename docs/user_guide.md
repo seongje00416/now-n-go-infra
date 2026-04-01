@@ -23,7 +23,7 @@ cd mzc-final-project-infra
 ### 1-2. Terraform 변수 파일 생성
 
 ```bash
-cat > environments/local/terraform.tfvars <<'EOF'
+cat > environments/local/terraform.tfvars.example.example.example.example <<'EOF'
 github_username = "본인_GitHub_아이디"
 github_token    = "본인_GitHub_PAT"
 cluster_name    = "local-dev"
