@@ -32,7 +32,7 @@
 | S3 API | http://localhost:9000 | 30100 |
 | MinIO Console (Web UI) | http://localhost:9001 | 30101 |
 
-- 로그인: `minioadmin` / `minioadmin1234`
+- 로그인: `***` / `***`
 
 > Kind 포트 매핑(main.tf)은 클러스터 재생성 시 적용됨. 기존 클러스터에서는 port-forward 사용:
 > ```bash
@@ -46,8 +46,8 @@
 | S3_ENDPOINT | ConfigMap | http://minio:9000 |
 | S3_REGION | ConfigMap | us-east-1 |
 | S3_BUCKET | ConfigMap | user-profiles |
-| S3_ACCESS_KEY | Secret | minioadmin |
-| S3_SECRET_KEY | Secret | minioadmin1234 |
+| S3_ACCESS_KEY | Secret | *** |
+| S3_SECRET_KEY | Secret | *** |
 
 ### 백엔드 연동 가이드
 
@@ -64,8 +64,8 @@ user-command-service에서 S3를 사용하려면:
      endpoint: ${S3_ENDPOINT:http://localhost:9000}
      region: ${S3_REGION:us-east-1}
      bucket: ${S3_BUCKET:user-profiles}
-     access-key: ${S3_ACCESS_KEY:minioadmin}
-     secret-key: ${S3_SECRET_KEY:minioadmin1234}
+     access-key: ${S3_ACCESS_KEY:***}
+     secret-key: ${S3_SECRET_KEY:***}
    ```
 
 3. **S3Client 빈 생성 시 주의사항**

@@ -373,50 +373,50 @@ resource "kubernetes_secret" "app_secret" {
 
   data = {
     # Keycloak DB
-    POSTGRES_USER     = "keycloak"
-    POSTGRES_PASSWORD = "keycloak1234"
+    POSTGRES_USER     = "***"
+    POSTGRES_PASSWORD = "***"
 
     # Keycloak Admin
-    KC_BOOTSTRAP_ADMIN_USERNAME = "admin"
-    KC_BOOTSTRAP_ADMIN_PASSWORD = "admin"
+    KC_BOOTSTRAP_ADMIN_USERNAME = "***"
+    KC_BOOTSTRAP_ADMIN_PASSWORD = "***"
 
     # BFF Client
-    KEYCLOAK_CLIENT_SECRET = "bff-secret-local-dev"
+    KEYCLOAK_CLIENT_SECRET = "***"
 
     # Redis (auth)
-    REDIS_PASSWORD = "redis-secret"
+    REDIS_PASSWORD = "***"
 
     # User DB
-    USER_DB_USER     = "userservice"
-    USER_DB_PASSWORD = "userservice1234"
+    USER_DB_USER     = "***"
+    USER_DB_PASSWORD = "***"
 
     # SMTP
-    SMTP_USER              = "waninokow@gmail.com"
-    SMTP_PASSWORD          = "urdh iuzk rntm ucyv"
-    SMTP_FROM              = "waninokow@gmail.com"
+    SMTP_USER              = "***"
+    SMTP_PASSWORD          = "***"
+    SMTP_FROM              = "***"
     SMTP_FROM_DISPLAY_NAME = "Ticket-Service"
 
     # Internal API Key
-    INTERNAL_API_KEY = "k8s-internal-api-key-s3cur3"
+    INTERNAL_API_KEY = "***"
 
     # Google OAuth
-    GOOGLE_CLIENT_ID     = "140364443613-ff37u5fg1vbo114p5ah1pfn6erjhug99.apps.googleusercontent.com"
-    GOOGLE_CLIENT_SECRET = "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"
+    GOOGLE_CLIENT_ID     = "***"
+    GOOGLE_CLIENT_SECRET = "***"
 
     # Redis (business)
-    REDIS_BUSINESS_PASSWORD = "redis-biz-secret"
+    REDIS_BUSINESS_PASSWORD = "***"
 
     # Booking DB
-    BOOKING_DB_USER     = "bookingservice"
-    BOOKING_DB_PASSWORD = "bookingservice1234"
+    BOOKING_DB_USER     = "***"
+    BOOKING_DB_PASSWORD = "***"
 
     # Encryption Keys (AES-256 + HMAC)
-    ENCRYPTION_AES_KEY  = "gdP8yw1/oi3NNCfC5H/2/URZrhzSONpt8K/cCB1F9gk="
-    ENCRYPTION_HMAC_KEY = "6ZtrrKC4Tg5NLKFPf1g8oivr64bNSJIXHpeJfE/Xcws="
+    ENCRYPTION_AES_KEY  = "***"
+    ENCRYPTION_HMAC_KEY = "***"
 
     # S3 (MinIO)
-    S3_ACCESS_KEY = "minioadmin"
-    S3_SECRET_KEY = "minioadmin1234"
+    S3_ACCESS_KEY = "***"
+    S3_SECRET_KEY = "***"
   }
 
   depends_on = [kubernetes_namespace.namespaces]

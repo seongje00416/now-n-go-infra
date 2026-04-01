@@ -93,10 +93,10 @@ kubectl get pods -n dev -w
 |--------|-----|------|
 | Frontend | http://localhost:3000 | React 앱 (Nginx) |
 | Gateway API | http://localhost:8443 | Spring Cloud Gateway |
-| Keycloak | http://localhost:9090 | admin / admin |
+| Keycloak | http://localhost:9090 | *** / *** |
 | ArgoCD | http://localhost:8080 | 아래 명령으로 비밀번호 확인 |
-| Jenkins | http://localhost:8000 | admin / admin |
-| MinIO Console | https://localhost:9001 | minioadmin / minioadmin1234 |
+| Jenkins | http://localhost:8000 | *** / *** |
+| MinIO Console | https://localhost:9001 | *** / *** |
 | MinIO API | https://localhost:9000 | S3 호환 API |
 
 ### ArgoCD 비밀번호 확인
